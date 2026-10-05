@@ -2,13 +2,13 @@
 
 :root {
   --bg: #343536;
-  --ink: #1c2230;
-  --muted: #5d6577;
-  --gold: #a87612;
-  --focus: #2f5bd3;
+  --ink: #e9ecf2;
+  --muted: #9aa2b3;
+  --gold: #e2b654;
+  --focus: #8ea9ff;
   --highlight-gold: #c5a15a;
 
-  /* Табло: яркие акценты при наведении и текст на них */
+  /* Табло: цвета пробы и текст на них */
   --gold-bright: #e2b654;
   --silver-bright: #c9d0dc;
   --on-gold: #1a1408;
@@ -24,8 +24,6 @@
   --glass-fallback: rgba(30, 30, 34, 0.9);
   --glass-hover: rgba(255, 255, 255, 0.09);
   --glass-hover-border: rgba(255, 255, 255, 0.14);
-  --stamp-border: rgba(255, 255, 255, 0.3);
-  --hover-ms: 0.5s;
 
   /* Фон страницы: затемнение поверх картинки */
   --overlay-from: rgb(3 3 3 / 80%);
@@ -34,23 +32,17 @@
   --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-head: Georgia, "Times New Roman", serif;
   --font-num: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  color-scheme: light;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --ink: #e9ecf2;
-    --muted: #9aa2b3;
-    --gold: #e2b654;
-    --focus: #8ea9ff;
-    color-scheme: dark;
-  }
+  color-scheme: dark; /* страница всегда тёмная, светлой темы нет */
 }
 
 /* ---------- Основа ---------- */
 
 * {
   box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%; /* iOS не раздувает шрифт при повороте экрана */
 }
 
 body {
@@ -85,12 +77,22 @@ h2 {
 /* ---------- Раскладка страницы ---------- */
 
 .page {
+  position: relative;
+  isolation: isolate;
   min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* Фон не скроллится вместе со страницей. Через fixed-слой, потому что iOS игнорирует background-attachment: fixed */
+.page::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
   background-image: linear-gradient(130deg, var(--overlay-from), var(--overlay-to)), url(img/background.png);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  background-attachment: fixed; /* картинка не скроллится вместе со страницей */
 }
 
 .container {
@@ -98,7 +100,7 @@ h2 {
   gap: 32px;
   max-width: 880px;
   margin: 0 auto;
-  padding: 32px 16px 64px;
+  padding: 32px max(16px, env(safe-area-inset-right)) calc(64px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
 }
 
 .section {
@@ -188,15 +190,10 @@ h2 {
 }
 
 .rate-card {
-  position: relative;
-  margin-bottom: 15px;
   padding: 18px 20px 20px;
   text-align: left;
-  transition:
-    background var(--hover-ms),
-    border-color var(--hover-ms);
 
-  /* Цвета подсветки по умолчанию; для золота и серебра задаются ниже */
+  /* Цвета пробы по умолчанию; для золота и серебра задаются ниже */
   --accent: var(--glass-hover-border);
   --on-accent: var(--ink);
 }
@@ -221,8 +218,10 @@ h2 {
 
 .stamp {
   padding: 1px 9px;
-  border: 1px solid var(--stamp-border);
+  background: var(--accent);
+  border: 1px solid var(--accent);
   border-radius: 999px;
+  color: var(--on-accent);
   font-size: 13px;
   font-variant-numeric: tabular-nums;
 }
@@ -238,36 +237,6 @@ h2 {
   margin-top: 2px;
   font-size: 13px;
   color: var(--muted);
-}
-
-/* Полоска снизу, видна при наведении */
-.rate-card::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -12px;
-  height: 4px;
-  border-radius: 14px;
-  opacity: 0;
-  transition: opacity var(--hover-ms);
-}
-
-/* Подсветка при наведении: фон карточки, проба и полоска в цвет металла */
-.rate-card:hover {
-  background: var(--glass-hover);
-  border-color: var(--glass-hover-border);
-}
-
-.rate-card:hover .stamp {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--on-accent);
-}
-
-.rate-card:hover::after {
-  background: var(--accent);
-  opacity: 1;
 }
 
 /* ---------- Калькулятор ---------- */
@@ -396,10 +365,12 @@ select {
   color: var(--muted);
 }
 
-.btn:hover,
-.btn-icon:hover:not(:disabled) {
-  border-color: var(--glass-hover-border);
-  background-color: var(--glass-hover);
+@media (hover: hover) {
+  .btn:hover,
+  .btn-icon:hover:not(:disabled) {
+    border-color: var(--glass-hover-border);
+    background-color: var(--glass-hover);
+  }
 }
 
 .btn-icon:disabled {
@@ -413,31 +384,92 @@ select {
   font-weight: 200;
 }
 
-/* ---------- Телефон ---------- */
+/* ---------- Адаптивность ---------- */
 
-@media (max-width: 620px) {
+/* Планшет в портрете и телефон: поля изделия в несколько строк */
+@media (max-width: 720px) {
   .item,
   [data-show-qty="0"] .item {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 40px;
   }
 
+  .bar > h2 {
+    color: #fff;
+  }
+
+  /* строка 1: проба и кнопка удаления; строка 2: вес и количество; строка 3: стоимость */
   .field-probe {
-    grid-column: 1 / -1;
+    grid-column: 1 / 3;
   }
 
   .btn-icon {
-    justify-self: end;
+    grid-column: 3;
+    grid-row: 1;
+  }
+
+  .subtotal {
+    grid-column: 1 / -1;
+  }
+
+  [data-show-qty="0"] .subtotal {
+    grid-column: auto;
+  }
+}
+
+/* Телефон */
+@media (max-width: 480px) {
+  .bar > h2 {
+    color: #fff;
+  }
+
+  .container {
+    gap: 24px;
+    padding-top: 20px;
+  }
+
+  .hero {
+    margin-top: 24px;
+  }
+
+  .lead {
+    display: none;
+  }
+
+  .bar {
+    margin-top: 20px;
+  }
+
+  .board {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .rate-card {
+    padding: 14px;
+  }
+
+  .rate-price {
+    font-size: 26px;
+  }
+
+  .panel {
+    padding: 16px;
+  }
+
+  /* кнопка и «Итого» каждая на своей строке, итог по правому краю */
+  .bar:has(.total) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .total {
+    text-align: right;
   }
 }
 
 /* ---------- Без анимаций ---------- */
 
 @media (prefers-reduced-motion: reduce) {
-  .rate-card,
-  .rate-card::after {
-    transition: none;
-  }
-
   .item.is-entering,
   .item.is-leaving {
     animation: none;
