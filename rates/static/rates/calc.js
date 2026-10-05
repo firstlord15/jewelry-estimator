@@ -5,7 +5,6 @@
   const STORAGE_KEY = "jewelry-calc-items";
   const SHOW_QTY = document.body.dataset.showQty === "1";
   const RESIZE_MS = 200;
-  const LEAVE_MS = 150; // должно совпадать с длительностью item-out в calc.css
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
   let itemsRendered = false;
@@ -19,8 +18,16 @@
   const $ = (selector, root = document) => root.querySelector(selector);
   const money = new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 2 });
   const formatMoney = (value) => `${money.format(value)} ${state.currency}`;
-  const probeLabel = (rate) => `${rate.metal_label} ${rate.fineness}`;
   const findRate = (id) => state.rates.find((rate) => rate.id === id);
+  const pricePerGram = (rate) => Number(rate.price_per_gram);
+  const defaultProbeId = () => state.rates[0]?.id ?? null;
+
+  function createElement(tag, className, text) {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  }
 
   // «3,5» и «3.5» — одно и то же; пустое, отрицательное и мусор — ноль
   function parseNumber(value) {
@@ -48,7 +55,7 @@
   }
 
   function newItem() {
-    return { probeId: state.rates[0]?.id ?? null, grams: "", qty: "1" };
+    return { probeId: defaultProbeId(), grams: "", qty: "1" };
   }
 
   // ---------- Табло курса ----------
@@ -58,29 +65,11 @@
     board.replaceChildren();
 
     for (const rate of state.rates) {
-      const card = document.createElement("div");
-      card.className = `rate-card glass rate-${rate.metal}`;
+      const head = createElement("div", "rate-head");
+      head.append(createElement("span", "stamp", rate.fineness), createElement("span", "", rate.metal_label));
 
-      const head = document.createElement("div");
-      head.className = "rate-head";
-
-      const stamp = document.createElement("span");
-      stamp.className = "stamp";
-      stamp.textContent = rate.fineness;
-
-      const metal = document.createElement("span");
-      metal.textContent = rate.metal_label;
-
-      const price = document.createElement("div");
-      price.className = "rate-price";
-      price.textContent = money.format(Number(rate.price_per_gram));
-
-      const unit = document.createElement("div");
-      unit.className = "rate-unit";
-      unit.textContent = `${state.currency} за 1 г`;
-
-      head.append(stamp, metal);
-      card.append(head, price, unit);
+      const card = createElement("div", `rate-card glass rate-${rate.metal}`);
+      card.append(head, createElement("div", "rate-price", money.format(pricePerGram(rate))), createElement("div", "rate-unit", `${state.currency} за 1 г`));
       board.append(card);
     }
 
@@ -94,6 +83,7 @@
         })
       : "";
   }
+
   // ---------- Блоки изделий ----------
 
   // Плавно меняем высоту списка (а значит, и панели) со старой на новую
@@ -108,60 +98,65 @@
     animation.oncancel = done;
   }
 
+  // Блок изделия из шаблона: значения из state и обработчики полей
+  function createItemNode(item) {
+    const node = $("#item-template").content.firstElementChild.cloneNode(true);
+    const select = $(".js-probe", node);
+    const grams = $(".js-grams", node);
+    const qty = $(".js-qty", node);
+    const remove = $(".js-remove", node);
+
+    for (const rate of state.rates) {
+      const text = `${rate.metal_label} ${rate.fineness} — ${formatMoney(pricePerGram(rate))}/г`;
+      select.add(new Option(text, rate.id));
+    }
+
+    // Проба могла быть удалена или скрыта, пока человека не было на сайте
+    if (!findRate(item.probeId)) item.probeId = defaultProbeId();
+
+    select.disabled = state.rates.length === 0;
+    if (item.probeId !== null) select.value = item.probeId;
+    grams.value = item.grams;
+    if (qty) qty.value = item.qty;
+    remove.disabled = state.items.length === 1;
+
+    select.addEventListener("change", () => {
+      item.probeId = Number(select.value);
+      updateTotals();
+    });
+    grams.addEventListener("input", () => {
+      item.grams = grams.value;
+      updateTotals();
+    });
+    qty?.addEventListener("input", () => {
+      item.qty = qty.value;
+      updateTotals();
+    });
+    remove.addEventListener("click", () => removeItem(item, node));
+
+    return node;
+  }
+
+  function removeItem(item, node) {
+    $(".js-remove", node).disabled = true;
+    node.classList.add("is-leaving");
+    // ждём конец анимации из CSS; без анимации (reduced motion) список пуст и ждать нечего
+    Promise.allSettled(node.getAnimations().map((animation) => animation.finished)).then(() => {
+      state.items.splice(state.items.indexOf(item), 1);
+      renderItems();
+    });
+  }
+
   // enterIndex: какой блок только что добавили, чтобы анимировать появление только его
   function renderItems(enterIndex = -1) {
     const container = $("#items");
-    const template = $("#item-template");
     const from = container.offsetHeight;
     container.getAnimations().forEach((animation) => animation.cancel());
     container.replaceChildren();
 
     state.items.forEach((item, index) => {
-      const node = template.content.firstElementChild.cloneNode(true);
-      const select = $(".js-probe", node);
-      const grams = $(".js-grams", node);
-      const qty = $(".js-qty", node);
-      const remove = $(".js-remove", node);
-
-      for (const rate of state.rates) {
-        const text = `${probeLabel(rate)} — ${formatMoney(Number(rate.price_per_gram))}/г`;
-        select.add(new Option(text, rate.id));
-      }
-
-      // Проба могла быть удалена или скрыта, пока человека не было на сайте
-      if (!findRate(item.probeId)) item.probeId = state.rates[0]?.id ?? null;
-
-      select.disabled = state.rates.length === 0;
-      if (item.probeId !== null) select.value = item.probeId;
-      grams.value = item.grams;
-      if (qty) qty.value = item.qty;
-      remove.disabled = state.items.length === 1;
+      const node = createItemNode(item);
       if (index === enterIndex) node.classList.add("is-entering");
-
-      select.addEventListener("change", () => {
-        item.probeId = Number(select.value);
-        updateTotals();
-      });
-      grams.addEventListener("input", () => {
-        item.grams = grams.value;
-        updateTotals();
-      });
-      qty?.addEventListener("input", () => {
-        item.qty = qty.value;
-        updateTotals();
-      });
-      remove.addEventListener("click", () => {
-        remove.disabled = true;
-        node.classList.add("is-leaving");
-        setTimeout(
-          () => {
-            state.items.splice(state.items.indexOf(item), 1);
-            renderItems();
-          },
-          reduceMotion.matches ? 0 : LEAVE_MS,
-        );
-      });
-
       container.append(node);
     });
 
@@ -175,7 +170,7 @@
     const rate = findRate(item.probeId);
     if (!rate) return 0;
     const count = SHOW_QTY ? Math.floor(parseNumber(item.qty)) : 1;
-    const cost = Number(rate.price_per_gram) * parseNumber(item.grams) * count;
+    const cost = pricePerGram(rate) * parseNumber(item.grams) * count;
     return Math.round(cost * 100) / 100;
   }
 
