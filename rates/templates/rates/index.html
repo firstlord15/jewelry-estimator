@@ -1,0 +1,66 @@
+{% load static %}
+<!doctype html>
+<html lang="ru">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Калькулятор ювелирных изделий</title>
+        <link rel="stylesheet" href="{% static 'rates/calc.css' %}" />
+    </head>
+    <body data-show-qty="{{ show_qty|yesno:'1,0' }}" class="{% if not show_qty %}no-qty{% endif %}">
+        <main class="page">
+            <div class="container">
+                <div class="hero">
+                    <p class="eyebrow">Курс золота и серебра</p>
+                    <h1>Ювелирный <span class="highlight-text">калькулятор</span></h1>
+                    <p class="lead">Выберите пробу, укажите вес{% if show_qty %} и количество{% endif %} и стоимость посчитается сразу.</p>
+                </div>
+
+                <section class="section" aria-labelledby="board-title">
+                    <div class="bar">
+                        <h2 id="board-title" class="muted">Цена за 1 грамм</h2>
+                        <span id="updated" class="muted"></span>
+                    </div>
+                    <div id="board" class="board"></div>
+                    <p id="board-status" class="notice">Загружаем курс…</p>
+                </section>
+
+                <section class="panel glass" aria-labelledby="calc-title">
+                    <h2 id="calc-title">Расчёт стоимости</h2>
+                    <div id="items" class="items"></div>
+                    <div class="bar">
+                        <button type="button" id="add-item" class="btn glass"><span class="highlight-text plus">+</span> <span>Добавить изделие</span></button>
+                        <p class="total">Итого: <output id="total">0 сом</output></p>
+                    </div>
+                    <p class="muted small">Стоимость = цена за грамм × вес{% if show_qty %} × количество{% endif %}. Расчёт ориентировочный, итоговую цену уточняйте у продавца.</p>
+                </section>
+            </div>
+        </main>
+
+        <template id="item-template">
+            <div class="item">
+                <label class="field field-probe">
+                    Металл и проба
+                    <select class="js-probe"></select>
+                </label>
+                <label class="field"
+                    >Вес, г
+                    <input class="input-num js-grams" type="text" inputmode="decimal" placeholder="3,5" autocomplete="off" />
+                </label>
+                {% if show_qty %}
+                <label class="field"
+                    >Кол-во, шт
+                    <input class="input-num js-qty" type="number" inputmode="numeric" min="1" step="1" />
+                </label>
+                {% endif %}
+                <div class="field subtotal">
+                    <span>Стоимость</span>
+                    <output class="js-subtotal">0 сом</output>
+                </div>
+                <button type="button" class="btn-icon glass js-remove" aria-label="Удалить изделие">×</button>
+            </div>
+        </template>
+
+        <script src="{% static 'rates/calc.js' %}" defer></script>
+    </body>
+</html>

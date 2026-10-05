@@ -1,0 +1,438 @@
+/* ---------- Переменные ---------- */
+
+:root {
+  --bg: #343536;
+  --ink: #1c2230;
+  --muted: #5d6577;
+  --gold: #a87612;
+  --focus: #2f5bd3;
+  --highlight-gold: #c5a15a;
+
+  /* Табло: яркие акценты при наведении и текст на них */
+  --gold-bright: #e2b654;
+  --silver-bright: #c9d0dc;
+  --on-gold: #1a1408;
+  --on-silver: #14171c;
+
+  /* Табло: «стекло» поверх тёмной картинки */
+  --glass-from: rgba(255, 255, 255, 0.07);
+  --glass-to: rgba(255, 255, 255, 0.02);
+  --glass-bg: linear-gradient(145deg, var(--glass-from), var(--glass-to));
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-shine: rgba(255, 255, 255, 0.06);
+  --glass-shadow: rgba(0, 0, 0, 0.35);
+  --glass-fallback: rgba(30, 30, 34, 0.9);
+  --glass-hover: rgba(255, 255, 255, 0.09);
+  --glass-hover-border: rgba(255, 255, 255, 0.14);
+  --stamp-border: rgba(255, 255, 255, 0.3);
+
+  /* Фон страницы: затемнение поверх картинки */
+  --overlay-from: rgb(3 3 3 / 80%);
+  --overlay-to: rgb(59 59 59 / 80%);
+
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-head: Georgia, "Times New Roman", serif;
+  --font-num: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink: #e9ecf2;
+    --muted: #9aa2b3;
+    --gold: #e2b654;
+    --focus: #8ea9ff;
+    color-scheme: dark;
+  }
+}
+
+/* ---------- Основа ---------- */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 16px/1.5 var(--font);
+}
+
+h1,
+h2 {
+  margin: 0;
+  font-family: var(--font);
+  font-weight: 400;
+  text-wrap: balance;
+}
+
+h1 {
+  font-size: clamp(28px, 5vw, 40px);
+  line-height: 1.15;
+}
+
+h2 {
+  font-size: 22px;
+}
+
+:is(input, select, button):focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+
+/* ---------- Раскладка страницы ---------- */
+
+.page {
+  min-height: 100vh;
+  background-image: linear-gradient(130deg, var(--overlay-from), var(--overlay-to)), url(img/background.png);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed; /* картинка не скроллится вместе со страницей */
+}
+
+.container {
+  display: grid;
+  gap: 32px;
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 32px 16px 64px;
+}
+
+.section {
+  display: grid;
+  gap: 12px;
+}
+
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 30px;
+}
+
+/* ---------- Текст ---------- */
+
+.hero {
+  display: grid;
+  gap: 6px;
+  margin-top: 60px;
+  font-family: sans-serif;
+}
+
+.hero > h1 {
+  font-family: var(--font-head);
+}
+
+.eyebrow {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 300;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  opacity: 0.8;
+}
+
+.lead {
+  max-width: 60ch;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.highlight-text {
+  color: var(--highlight-gold);
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.small {
+  margin: 20px 0 0 0;
+  font-size: 13px;
+  border-top: 1px solid var(--glass-border);
+  padding: 20px 0 5px 0;
+}
+
+/* ---------- «Стекло» ---------- */
+
+.glass {
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  backdrop-filter: blur(18px) saturate(140%);
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  box-shadow:
+    inset 0 1px 0 var(--glass-shine),
+    0 12px 32px var(--glass-shadow);
+}
+
+/* Если браузер не умеет размывать фон, делаем карточку плотнее, чтобы текст читался */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass {
+    background: var(--glass-fallback);
+  }
+}
+
+/* ---------- Табло курса ---------- */
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 14px;
+}
+
+.rate-card {
+  position: relative;
+  margin-bottom: 15px;
+  padding: 18px 20px 20px;
+  text-align: left;
+  transition:
+    background 0.5s,
+    border-color 0.5s;
+}
+
+.rate-gold {
+  --accent: var(--gold-bright);
+  --on-accent: var(--on-gold);
+}
+
+.rate-silver {
+  --accent: var(--silver-bright);
+  --on-accent: var(--on-silver);
+}
+
+.rate-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.stamp {
+  padding: 1px 9px;
+  border: 1px solid var(--stamp-border);
+  border-radius: 999px;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.rate-price {
+  margin-top: 10px;
+  font-family: var(--font-head);
+  font-size: 34px;
+  font-variant-numeric: tabular-nums;
+}
+
+.rate-unit {
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* Полоска снизу, видна при наведении */
+.rate-card::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -12px;
+  height: 4px;
+  border-radius: 14px;
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+
+/* Подсветка при наведении: фон карточки, проба и полоска в цвет металла */
+.rate-card:hover {
+  background: var(--glass-hover);
+  border-color: var(--glass-hover-border);
+}
+
+:is(.rate-gold, .rate-silver):hover .stamp {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+
+:is(.rate-gold, .rate-silver):hover::after {
+  background: var(--accent);
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rate-card,
+  .rate-card::after {
+    transition: none;
+  }
+
+  .item.is-entering,
+  .item.is-leaving {
+    animation: none;
+  }
+}
+
+/* ---------- Калькулятор ---------- */
+
+.panel {
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+}
+
+.items {
+  display: grid;
+  gap: 12px;
+}
+
+.item {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 0.8fr) minmax(0, 1.3fr) 40px;
+  gap: 10px;
+  align-items: end;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.item:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+/* Без поля «Количество» колонок на одну меньше */
+.no-qty .item {
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1.3fr) 40px;
+}
+
+/* Появление и удаление изделия (классы ставит calc.js) */
+.item.is-entering {
+  animation: item-in 0.2s ease-out;
+}
+
+.item.is-leaving {
+  animation: item-out 0.15s ease-in forwards;
+  pointer-events: none;
+}
+
+@keyframes item-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@keyframes item-out {
+  to {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+.field {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+input,
+select {
+  width: 100%;
+  min-width: 0;
+  padding: 9px 10px;
+  font: 16px var(--font);
+  color: var(--ink);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+}
+
+.input-num {
+  font-family: var(--font-num);
+}
+
+.subtotal output {
+  padding: 9px 0;
+  font: 600 17px var(--font-num);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.total {
+  margin: 0;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.total output {
+  margin-left: 6px;
+  font: 600 clamp(24px, 5vw, 32px) var(--font-num);
+  color: var(--gold);
+}
+
+/* ---------- Кнопки ---------- */
+
+.btn,
+.btn-icon {
+  font: 600 15px var(--font);
+  color: var(--ink);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.btn {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 6px 18px;
+}
+
+.btn-icon {
+  width: 40px;
+  height: 42px;
+  font-family: math;
+  font-size: 20px;
+  color: var(--muted);
+}
+
+.btn:hover,
+.btn-icon:hover:not(:disabled) {
+  border-color: var(--glass-hover-border);
+  background-color: var(--glass-hover);
+}
+
+.btn-icon:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.plus {
+  font-family: math;
+  font-size: 30px;
+  font-weight: 200;
+}
+
+/* ---------- Телефон ---------- */
+
+@media (max-width: 620px) {
+  .item,
+  .no-qty .item {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .field-probe {
+    grid-column: 1 / -1;
+  }
+
+  .btn-icon {
+    justify-self: end;
+  }
+}
