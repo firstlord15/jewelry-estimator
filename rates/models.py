@@ -52,6 +52,32 @@ class Probe(models.Model):
         return f"{self.get_metal_display()} {self.fineness}"
 
 
+class QuickWeight(models.Model):
+    """Быстрый вес: кнопка «5 г» под полем веса в калькуляторе."""
+
+    grams = models.DecimalField(
+        "вес, г",
+        max_digits=8,
+        decimal_places=2,
+        unique=True,
+        validators=[MinValueValidator(Decimal("0.01"))],
+        help_text="Например: 1, 2.5, 10",
+    )
+    is_active = models.BooleanField(
+        "показывать на сайте",
+        default=True,
+        help_text="Снимите галочку, чтобы скрыть кнопку, не удаляя её",
+    )
+
+    class Meta:
+        verbose_name = "быстрый вес"
+        verbose_name_plural = "быстрые веса"
+        ordering = ["grams"]
+
+    def __str__(self):
+        return f"{self.grams.normalize():f} г"
+
+
 class PriceChange(models.Model):
     """Запись в истории: кто, когда и что сделал с пробой."""
 

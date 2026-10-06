@@ -11,6 +11,7 @@
 
   const state = {
     rates: [],
+    quickWeights: [], // быстрые веса из админки, числами
     currency: "сом",
     items: [],
     active: null, // изделие, чья проба подсвечена в таблице курса
@@ -243,9 +244,15 @@
       }),
     );
 
-    for (const chip of $$("[data-grams]", node)) {
-      chip.addEventListener("click", () => setGrams(chip.dataset.grams));
-    }
+    const quick = $(".js-quick", node);
+    quick.hidden = state.quickWeights.length === 0;
+    quick.append(
+      ...state.quickWeights.map((value) => {
+        const chip = createButton("chip", `${money.format(value)} г`, { grams: value });
+        chip.addEventListener("click", () => setGrams(String(value).replace(".", ",")));
+        return chip;
+      }),
+    );
 
     grams.value = item.grams;
     if (qty) qty.value = item.qty;
@@ -342,6 +349,7 @@
 
       state.rates = data.rates;
       state.currency = data.currency_label || "сом";
+      state.quickWeights = (data.quick_weights ?? []).map(Number);
       $("#updated").textContent = data.updated_at
         ? "Обновлено " +
           new Date(data.updated_at).toLocaleString("ru-RU", {

@@ -9,11 +9,15 @@ MODERATOR_PERMISSIONS = [
     "change_probe",
     "delete_probe",
     "view_pricechange",
+    "view_quickweight",
+    "add_quickweight",
+    "change_quickweight",
+    "delete_quickweight",
 ]
 
 
 class Command(BaseCommand):
-    help = "Создаёт или обновляет группу «Модераторы» с правами на пробы"
+    help = "Создаёт или обновляет группу «Модераторы» с правами на пробы и быстрые веса"
 
     def handle(self, *args, **options):
         perms = Permission.objects.filter(

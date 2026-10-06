@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import PriceChange, Probe, Profile
+from .models import PriceChange, Probe, Profile, QuickWeight
 from .services import delete_probe, save_probe
 
 from django.urls import reverse
@@ -27,6 +27,13 @@ class ProbeAdmin(admin.ModelAdmin):
         # Массовое удаление через «Действия» в списке
         for probe in queryset:
             delete_probe(probe, request.user)
+
+
+@admin.register(QuickWeight)
+class QuickWeightAdmin(admin.ModelAdmin):
+    list_display = ("__str__", "is_active")
+    list_editable = ("is_active",)
+    list_filter = ("is_active",)
 
 
 @admin.register(PriceChange)

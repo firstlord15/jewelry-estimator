@@ -3,7 +3,7 @@ from django.http import JsonResponse
 from django.views.decorators.cache import cache_control
 from django.views.decorators.http import require_GET
 
-from .models import Probe
+from .models import Probe, QuickWeight
 from django.shortcuts import render
 from django.conf import settings
 
@@ -19,6 +19,9 @@ def rates_api(request):
         "currency": "KGS",
         "currency_label": "сом",
         "updated_at": updated_at.isoformat() if updated_at else None,
+        "quick_weights": [
+            f"{w.grams.normalize():f}" for w in QuickWeight.objects.filter(is_active=True)
+        ],
         "rates": [
             {
                 "id": p.id,

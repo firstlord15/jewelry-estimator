@@ -4,7 +4,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from django.test import override_settings
-from .models import Probe
+from .models import Probe, QuickWeight
 
 
 class RatesApiTests(TestCase):
@@ -42,7 +42,7 @@ class IndexPageTests(TestCase):
     def test_index_opens(self):
         response = self.client.get(reverse("rates:index"))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Расчёт стоимости")
+        self.assertContains(response, "Рассчитайте стоимость")
 
     @override_settings(CALC_SHOW_QUANTITY=False)
     def test_quantity_hidden(self):
@@ -55,3 +55,19 @@ class IndexPageTests(TestCase):
         response = self.client.get(reverse("rates:index"))
         self.assertContains(response, "js-qty")
         self.assertContains(response, 'data-show-qty="1"')
+
+
+class QuickWeightsTests(TestCase):
+    def setUp(self):
+        # миграция заложила стандартный набор; для проверок начинаем с чистого листа
+        QuickWeight.objects.all().delete()
+        self.url = reverse("rates:api")
+
+    def test_active_sorted_and_trimmed(self):
+        QuickWeight.objects.create(grams=Decimal("10"))
+        QuickWeight.objects.create(grams=Decimal("2.5"))
+        QuickWeight.objects.create(grams=Decimal("7"), is_active=False)
+        self.assertEqual(self.client.get(self.url).json()["quick_weights"], ["2.5", "10"])
+
+    def test_empty_by_default(self):
+        self.assertEqual(self.client.get(self.url).json()["quick_weights"], [])
