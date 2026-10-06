@@ -169,6 +169,7 @@ h2 {
 
 .small {
   font-size: 13px;
+  margin-top: auto;
 }
 
 .note {
@@ -529,7 +530,7 @@ input {
   }
 
   .rates {
-    max-height: fit-content; /* курс не тянется за высотой калькулятора */
+    align-self: start; /* курс не тянется за высотой калькулятора (max-height: fit-content Firefox и Safari не понимают) */
   }
 
   .is-many .rates {

@@ -82,10 +82,12 @@
     $("#board-metals").replaceChildren(
       ...metals().map(([metal, label]) => {
         const button = createButton("segment", label, { metal });
-        button.addEventListener("click", () => {
-          state.boardMetal = metal;
-          syncBoard();
-        });
+        button.addEventListener("click", () =>
+          animateChange(() => {
+            state.boardMetal = metal;
+            syncBoard();
+          }),
+        );
         return button;
       }),
     );
@@ -112,30 +114,75 @@
   }
 
   function setActive(item) {
-    state.active = item;
-    state.boardMetal = metalOf(item.probeId) ?? state.boardMetal;
-    syncBoard();
+    animateChange(() => {
+      state.active = item;
+      state.boardMetal = metalOf(item.probeId) ?? state.boardMetal;
+      syncBoard();
+    });
   }
 
   // ---------- Блоки изделий ----------
 
-  // Калькулятор, итог и курс меняют размер и место скачком: при добавлении и удалении изделия
-  // и когда раскладка зависит от их числа. Плавно ведём каждый блок из старого вида в новый.
-  // Пока идёт анимация:
-  // - содержимое обрезается и прижимается к верху, чтобы шапка («Рассчитайте стоимость», «+») не уезжала
-  //   вместе с центрированием, пока высота рамки меняется;
-  // - строки и колонки сетки заморожены в итоговых размерах, иначе анимируемая высота одного блока
-  //   пересчитывала бы строки и сдвигала соседей
+  // ---------- Анимация смены размеров и мест ----------
+  //
+  // Калькулятор, итог, курс и сами изделия меняют размер и место скачком: при добавлении и удалении
+  // изделия, при смене металла (меняется число проб), когда раскладка зависит от числа изделий.
+  // animateChange запоминает вид «до», выполняет изменение и плавно ведёт каждый блок в вид «после».
+
   let layoutAnimations = [];
+  let inChange = false;
+  const rectOf = (node) => node.getBoundingClientRect();
 
-  function animateLayout(panels, before) {
-    if (reduceMotion.matches) return;
+  function animateChange(change) {
+    if (inChange || !itemsRendered || reduceMotion.matches) {
+      change();
+      if (!inChange) syncCalcBase();
+      return;
+    }
 
+    const panels = $$(".panel");
+    const itemNodesNow = state.items.filter((item) => itemNodes.has(item)).map((item) => itemNodes.get(item));
+    const panelsBefore = panels.map(rectOf);
+    const itemsBefore = new Map(state.items.filter((item) => itemNodes.has(item)).map((item) => [item, rectOf(itemNodes.get(item))]));
+    // прерванную анимацию снимаем уже после замера: он учитывает то, что человек видит сейчас
+    [...panels, ...itemNodesNow].forEach((node) => node.getAnimations().filter((animation) => !("animationName" in animation)).forEach((animation) => animation.cancel()));
+
+    // Сетка могла остаться замороженной от прерванной анимации: размораживаем до изменения,
+    // иначе итоговые размеры строк мы бы считали по старым замороженным
+    Object.assign($(".layout").style, { gridTemplateColumns: "", gridTemplateRows: "" });
+
+    inChange = true;
+    try {
+      change();
+    } finally {
+      inChange = false;
+    }
+    syncCalcBase();
+
+    // все замеры «после» делаем до старта первой анимации: она сама меняет размеры
     const layout = $(".layout");
-    const after = panels.map((panel) => panel.getBoundingClientRect()); // все замеры до старта первой анимации
     const { gridTemplateColumns, gridTemplateRows } = getComputedStyle(layout);
+    const panelsAfter = panels.map(rectOf);
+    const itemsAfter = new Map(state.items.filter((item) => itemsBefore.has(item)).map((item) => [item, rectOf(itemNodes.get(item))]));
 
-    const animations = panels.flatMap((panel, index) => {
+    animateItems(itemsBefore, itemsAfter);
+    const animations = animatePanels(panels, panelsBefore, panelsAfter);
+    if (!animations.length) return;
+
+    // Строки и колонки сетки замораживаем в итоговых размерах на время анимации: иначе анимируемая
+    // высота одного блока пересчитывала бы строки и сдвигала соседей
+    Object.assign(layout.style, { gridTemplateColumns, gridTemplateRows });
+    layoutAnimations = animations;
+    Promise.allSettled(animations.map((animation) => animation.finished)).then(() => {
+      // если анимацию прервала новая, сетку разморозит уже она
+      if (layoutAnimations === animations) Object.assign(layout.style, { gridTemplateColumns: "", gridTemplateRows: "" });
+    });
+  }
+
+  // Рамки блоков. На время анимации содержимое обрезается и прижимается к верху, чтобы шапка
+  // («Рассчитайте стоимость», «+») не уезжала вместе с центрированием, пока высота рамки меняется
+  function animatePanels(panels, before, after) {
+    return panels.flatMap((panel, index) => {
       const [from, to] = [before[index], after[index]];
       const [dx, dy] = [from.left - to.left, from.top - to.top];
       const resized = Math.abs(from.width - to.width) >= 1 || Math.abs(from.height - to.height) >= 1;
@@ -154,34 +201,26 @@
           ? [{ ...start, ...step }, { transform: `translate(0px, ${dy}px)`, width: end.width, height: end.height, ...step }, end]
           : [{ ...start, ...step }, { transform: `translate(${dx}px, 0px)`, width: start.width, height: start.height, ...step }, end];
 
-      panel.style.overflow = "hidden";
-      panel.style.justifyContent = "flex-start";
+      Object.assign(panel.style, { overflow: "hidden", justifyContent: "flex-start" });
       const animation = panel.animate(keyframes, { duration: twoSteps ? 320 : 200, easing: twoSteps ? "linear" : "ease-out" });
-      animation.onfinish = animation.oncancel = () => {
-        panel.style.overflow = "";
-        panel.style.justifyContent = "";
-      };
+      animation.onfinish = animation.oncancel = () => Object.assign(panel.style, { overflow: "", justifyContent: "" });
       return [animation];
-    });
-
-    if (!animations.length) return;
-    Object.assign(layout.style, { gridTemplateColumns, gridTemplateRows });
-    layoutAnimations = animations;
-    // если анимацию прервала новая, сетку разморозит уже она
-    Promise.allSettled(animations.map((animation) => animation.finished)).then(() => {
-      if (layoutAnimations === animations) Object.assign(layout.style, { gridTemplateColumns: "", gridTemplateRows: "" });
     });
   }
 
-  // Остальные изделия при удалении или добавлении съезжают на новое место плавно, а не прыгают
-  function animateItems(before) {
-    if (reduceMotion.matches) return;
-
-    for (const item of state.items) {
+  // Блоки изделий: съезжают на новое место, а при смене металла ещё и плавно меняют высоту
+  function animateItems(before, after) {
+    for (const [item, to] of after) {
       const from = before.get(item);
       const node = itemNodes.get(item);
-      const dy = from ? from.top - node.getBoundingClientRect().top : 0;
-      if (Math.abs(dy) >= 1) node.animate([{ transform: `translateY(${dy}px)` }, { transform: "none" }], { duration: 200, easing: "ease-out" });
+      const dy = from.top - to.top;
+      const resized = Math.abs(from.height - to.height) >= 1;
+      if (Math.abs(dy) < 1 && !resized) continue;
+
+      const frame = (box, transform) => ({ transform, ...(resized && { height: `${box.height}px` }) });
+      node.style.overflow = resized ? "hidden" : "";
+      const animation = node.animate([frame(from, `translateY(${dy}px)`), frame(to, "none")], { duration: 200, easing: "ease-out" });
+      animation.onfinish = animation.oncancel = () => (node.style.overflow = "");
     }
   }
 
@@ -228,10 +267,12 @@
     $(".js-metals", node).append(
       ...metals().map(([metal, label]) => {
         const segment = createButton("segment", label, { metal });
-        segment.addEventListener("click", () => {
-          if (metalOf(item.probeId) === metal) return setActive(item);
-          chooseProbe(state.rates.find((rate) => rate.metal === metal).id);
-        });
+        segment.addEventListener("click", () =>
+          animateChange(() => {
+            if (metalOf(item.probeId) === metal) return setActive(item);
+            chooseProbe(state.rates.find((rate) => rate.metal === metal).id);
+          }),
+        );
         return segment;
       }),
     );
@@ -288,30 +329,22 @@
 
   // enterIndex: какой блок только что добавили, чтобы анимировать появление только его
   function renderItems(enterIndex = -1) {
-    const container = $("#items");
-    const panels = $$(".panel");
-    const before = panels.map((panel) => panel.getBoundingClientRect());
-    const itemsBefore = new Map(state.items.filter((item) => itemNodes.has(item)).map((item) => [item, itemNodes.get(item).getBoundingClientRect()]));
-    panels.forEach((panel) => panel.getAnimations().forEach((animation) => animation.cancel()));
-    container.replaceChildren();
+    animateChange(() => {
+      const container = $("#items");
+      container.replaceChildren();
 
-    state.items.forEach((item, index) => {
-      const node = createItemNode(item);
-      if (index === enterIndex) node.classList.add("is-entering");
-      container.append(node);
+      state.items.forEach((item, index) => {
+        const node = createItemNode(item);
+        if (index === enterIndex) node.classList.add("is-entering");
+        container.append(node);
+      });
+
+      $(".layout").classList.toggle("is-many", state.items.length > 2); // раскладка планшета, см. calc.css
+      updateTotals();
+      if (state.items.includes(state.active)) syncBoard();
+      else setActive(state.items[0]);
     });
-
-    $(".layout").classList.toggle("is-many", state.items.length > 2); // раскладка планшета, см. calc.css
-    updateTotals();
-    if (state.items.includes(state.active)) syncBoard();
-    else setActive(state.items[0]);
-    syncCalcBase(); // итоговые размеры блоков нужны до анимации
-    // первый показ при загрузке страницы не анимируем
-    if (itemsRendered) {
-      animateItems(itemsBefore);
-      animateLayout(panels, before);
-    }
-    itemsRendered = true;
+    itemsRendered = true; // первый показ при загрузке страницы не анимируем
   }
 
   function itemCost(item) {
