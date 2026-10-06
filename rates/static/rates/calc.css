@@ -4,26 +4,31 @@
   --bg: #343536;
   --ink: #e9ecf2;
   --muted: #9aa2b3;
-  --gold: #e2b654;
   --focus: #8ea9ff;
   --highlight-gold: #c5a15a;
 
-  /* Табло: цвета пробы и текст на них */
+  /* Цвета металлов: проба и текст на ней, подсветка строки курса */
   --gold-bright: #e2b654;
   --silver-bright: #c9d0dc;
   --on-gold: #1a1408;
   --on-silver: #14171c;
+  --gold-tint: rgba(226, 182, 84, 0.22);
+  --silver-tint: rgba(201, 208, 220, 0.18);
 
-  /* Табло: «стекло» поверх тёмной картинки */
-  --glass-from: rgba(255, 255, 255, 0.07);
-  --glass-to: rgba(255, 255, 255, 0.02);
-  --glass-bg: linear-gradient(145deg, var(--glass-from), var(--glass-to));
+  /* «Стекло» поверх тёмной картинки */
+  --glass-bg: linear-gradient(145deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02));
   --glass-border: rgba(255, 255, 255, 0.08);
   --glass-shine: rgba(255, 255, 255, 0.06);
   --glass-shadow: rgba(0, 0, 0, 0.35);
   --glass-fallback: rgba(30, 30, 34, 0.9);
   --glass-hover: rgba(255, 255, 255, 0.09);
   --glass-hover-border: rgba(255, 255, 255, 0.14);
+  --soft: rgba(255, 255, 255, 0.05); /* вложенные плашки: изделие, чипы, переключатель */
+
+  /* Металл по умолчанию, если пришёл не золото и не серебро */
+  --accent: var(--ink);
+  --on-accent: var(--on-silver);
+  --tint: var(--glass-hover);
 
   /* Фон страницы: затемнение поверх картинки */
   --overlay-from: rgb(3 3 3 / 80%);
@@ -33,6 +38,19 @@
   --font-head: Georgia, "Times New Roman", serif;
   --font-num: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   color-scheme: dark; /* страница всегда тёмная, светлой темы нет */
+}
+
+/* Цвета металла получает любой элемент с data-metal: изделие, чип, строка курса */
+[data-metal="gold"] {
+  --accent: var(--gold-bright);
+  --on-accent: var(--on-gold);
+  --tint: var(--gold-tint);
+}
+
+[data-metal="silver"] {
+  --accent: var(--silver-bright);
+  --on-accent: var(--on-silver);
+  --tint: var(--silver-tint);
 }
 
 /* ---------- Основа ---------- */
@@ -45,6 +63,10 @@ html {
   -webkit-text-size-adjust: 100%; /* iOS не раздувает шрифт при повороте экрана */
 }
 
+[hidden] {
+  display: none !important;
+}
+
 body {
   margin: 0;
   background: var(--bg);
@@ -53,15 +75,20 @@ body {
 }
 
 h1,
-h2 {
+h2,
+p {
   margin: 0;
+}
+
+h1,
+h2 {
   font-weight: 400;
   text-wrap: balance;
 }
 
 h1 {
   font-family: var(--font-head);
-  font-size: clamp(28px, 5vw, 40px);
+  font-size: 40px;
   line-height: 1.15;
 }
 
@@ -69,7 +96,7 @@ h2 {
   font-size: 22px;
 }
 
-:is(input, select, button):focus-visible {
+:is(input, button):focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 1px;
 }
@@ -96,51 +123,41 @@ h2 {
 }
 
 .container {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 32px;
-  max-width: 880px;
+  max-width: 1440px;
   margin: 0 auto;
   padding: 32px max(16px, env(safe-area-inset-right)) calc(64px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
 }
 
-.section {
-  display: grid;
-  gap: 12px;
+.hero {
+  margin-top: 60px;
 }
 
-.bar {
+/* Калькулятор | итог | курс. Итог и курс задают высоту ряда, калькулятор такой же высоты.
+   Когда в нём больше изделий, он занимает вторую строку и растёт один, остальные не меняются.
+   Зазор между строками нулевой, чтобы пустая вторая строка не делала калькулятор выше */
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+  column-gap: 20px;
+}
+
+.calc {
+  grid-row: 1 / span 2;
+}
+
+.panel {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: 30px;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+  border-radius: 28px;
 }
 
 /* ---------- Текст ---------- */
-
-.hero {
-  display: grid;
-  gap: 6px;
-  margin-top: 60px;
-  font-family: sans-serif;
-}
-
-.eyebrow {
-  margin: 0;
-  font-size: 12px;
-  font-weight: 300;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--muted);
-  opacity: 0.8;
-}
-
-.lead {
-  max-width: 60ch;
-  font-weight: 400;
-  color: var(--muted);
-}
 
 .highlight-text {
   color: var(--highlight-gold);
@@ -151,16 +168,19 @@ h2 {
 }
 
 .small {
-  margin: 20px 0 0;
-  padding: 20px 0 5px;
   font-size: 13px;
+}
+
+.note {
+  padding-top: 16px;
+  font-size: 13px;
+  color: var(--muted);
   border-top: 1px solid var(--glass-border);
 }
 
 /* ---------- «Стекло» ---------- */
 
 .glass,
-.btn,
 .btn-icon {
   background: var(--glass-bg);
   -webkit-backdrop-filter: blur(18px) saturate(140%);
@@ -175,100 +195,172 @@ h2 {
 /* Если браузер не умеет размывать фон, делаем карточку плотнее, чтобы текст читался */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .glass,
-  .btn,
   .btn-icon {
     background: var(--glass-fallback);
   }
 }
 
-/* ---------- Табло курса ---------- */
+/* ---------- Переключатель металла и чипы ---------- */
 
-.board {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-  gap: 14px;
-}
-
-.rate-card {
-  padding: 18px 20px 20px;
-  text-align: left;
-
-  /* Цвета пробы по умолчанию; для золота и серебра задаются ниже */
-  --accent: var(--glass-hover-border);
-  --on-accent: var(--ink);
-}
-
-.rate-gold {
-  --accent: var(--gold-bright);
-  --on-accent: var(--on-gold);
-}
-
-.rate-silver {
-  --accent: var(--silver-bright);
-  --on-accent: var(--on-silver);
-}
-
-.rate-head {
+.segmented {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 14px;
-  color: var(--muted);
-}
-
-.stamp {
-  padding: 1px 9px;
-  background: var(--accent);
-  border: 1px solid var(--accent);
+  gap: 4px;
+  padding: 4px;
+  background: var(--soft);
   border-radius: 999px;
-  color: var(--on-accent);
-  font-size: 13px;
-  font-variant-numeric: tabular-nums;
 }
 
-.rate-price {
-  margin-top: 10px;
-  font-family: var(--font-head);
-  font-size: 34px;
-  font-variant-numeric: tabular-nums;
+.segment,
+.chip {
+  font: 600 14px var(--font);
+  color: var(--ink);
+  cursor: pointer;
 }
 
-.rate-unit {
-  margin-top: 2px;
+.segment {
+  flex: 1;
+  padding: 8px 18px;
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  padding: 8px 18px;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  background: var(--soft);
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+}
+
+.chips-quick .chip {
+  padding: 5px 13px;
   font-size: 13px;
   color: var(--muted);
 }
 
-/* ---------- Калькулятор ---------- */
-
-.panel {
-  display: grid;
-  gap: 16px;
-  padding: 20px;
+/* Выбранный чип или сегмент красится в цвет своего металла */
+:is(.segment, .chip)[aria-pressed="true"] {
+  color: var(--on-accent);
+  background: var(--accent);
+  border-color: var(--accent);
 }
+
+/* ---------- Изделия ---------- */
 
 .items {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 12px;
 }
 
 .item {
-  display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 0.8fr) minmax(0, 1.3fr) 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+  background: var(--soft);
+  border: 1px solid var(--glass-border);
+  border-radius: 22px;
+}
+
+.item-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.item-head .segmented {
+  flex: 1;
+  max-width: 320px;
+}
+
+.item-fields {
+  display: flex;
   gap: 10px;
-  align-items: end;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--glass-border);
 }
 
-.item:last-child {
-  padding-bottom: 0;
-  border-bottom: 0;
+.field-weight {
+  flex: 1 1 0;
 }
 
-/* Без поля «Количество» колонок на одну меньше */
-[data-show-qty="0"] .item {
-  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1.3fr) 40px;
+.field-qty {
+  flex: 0 0 110px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.input-wrap {
+  position: relative;
+  display: block;
+}
+
+input {
+  width: 100%;
+  min-width: 0;
+  padding: 11px 18px;
+  font: 16px var(--font);
+  color: var(--ink);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+}
+
+.input-wrap input {
+  padding-right: 46px;
+}
+
+.input-num {
+  font-family: var(--font-num);
+}
+
+.clear {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  font: 16px/1 var(--font);
+  color: var(--muted);
+  background: var(--glass-hover);
+  border: 0;
+  border-radius: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+
+.item-sum {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.item-sum output {
+  font: 600 18px var(--font-num);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  overflow-wrap: anywhere;
 }
 
 /* Появление и удаление изделия (классы ставит calc.js) */
@@ -295,82 +387,92 @@ h2 {
   }
 }
 
-.field {
-  display: grid;
-  gap: 4px;
-  min-width: 0;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--muted);
+/* ---------- Итог ---------- */
+
+.result {
+  align-items: center;
+  min-height: var(--calc-base, 0); /* высота калькулятора с одним изделием, её считает calc.js */
+  text-align: center;
 }
 
-input,
-select {
-  width: 100%;
-  min-width: 0;
-  padding: 9px 10px;
-  font: 16px var(--font);
-  color: var(--ink);
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: 8px;
+/* Цена по центру блока, пояснение прижато к низу */
+.result-main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
 }
 
-.input-num {
-  font-family: var(--font-num);
-}
-
-.subtotal output {
-  padding: 9px 0;
-  font: 600 17px var(--font-num);
+.result-total {
+  font: 600 clamp(30px, 3.4vw, 44px) / 1.1 var(--font);
   font-variant-numeric: tabular-nums;
-  color: var(--ink);
+  color: var(--gold-bright);
   overflow-wrap: anywhere;
 }
 
-.total {
-  margin: 0;
+.result-caption {
+  font-size: 18px;
   font-weight: 600;
+}
+
+.result .note {
+  width: 100%;
+}
+
+/* ---------- Курс ---------- */
+
+.panel-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.rates-cols,
+.rate-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 16px;
+}
+
+.rates-cols {
+  font-size: 13px;
   color: var(--muted);
 }
 
-.total output {
-  margin-left: 6px;
-  font: 600 clamp(24px, 5vw, 32px) var(--font-num);
-  color: var(--gold);
+.board {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rate-row {
+  padding: 10px 16px;
+  font-variant-numeric: tabular-nums;
+  border-radius: 999px;
+}
+
+/* Проба выбранного изделия подсвечена в цвет металла */
+.rate-row.is-active {
+  font-weight: 600;
+  background: var(--tint);
 }
 
 /* ---------- Кнопки ---------- */
 
-.btn,
 .btn-icon {
-  font: 600 15px var(--font);
-  color: var(--ink);
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-.btn {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  padding: 6px 18px;
-}
-
-.btn-icon {
-  width: 40px;
-  height: 42px;
-  font-family: math;
-  font-size: 20px;
+  flex: none;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  font: 20px math;
   color: var(--muted);
-}
-
-@media (hover: hover) {
-  .btn:hover,
-  .btn-icon:hover:not(:disabled) {
-    border-color: var(--glass-hover-border);
-    background-color: var(--glass-hover);
-  }
+  border-radius: 50%;
+  cursor: pointer;
 }
 
 .btn-icon:disabled {
@@ -378,50 +480,91 @@ select {
   cursor: default;
 }
 
-.plus {
-  font-family: math;
-  font-size: 30px;
-  font-weight: 200;
+/* «+» справа в шапке калькулятора */
+.btn-add {
+  font-size: 28px;
+  font-weight: 300;
+  line-height: 1;
+  color: var(--highlight-gold);
+}
+
+/* Hover только там, где есть мышь: на тачскринах он «залипает» */
+@media (hover: hover) {
+  .btn-icon:hover:not(:disabled) {
+    background-color: var(--glass-hover);
+    border-color: var(--glass-hover-border);
+  }
+
+  .segment:not([aria-pressed="true"]):hover,
+  .chip:not([aria-pressed="true"]):hover {
+    background: var(--glass-hover);
+  }
 }
 
 /* ---------- Адаптивность ---------- */
 
-/* Планшет в портрете и телефон: поля изделия в несколько строк */
-@media (max-width: 720px) {
-  .item,
-  [data-show-qty="0"] .item {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 40px;
+/* Две колонки: курс уходит под калькулятор и итог */
+@media (max-width: 1600px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto 1fr auto;
   }
 
-  .bar > h2 {
-    color: #fff;
+  .rates {
+    grid-column: 1 / -1;
+    margin-top: 20px;
+  }
+}
+
+/* Планшет: пока изделий мало, итог растянут на высоту калькулятора, а курс лежит под ними.
+   Когда изделий больше двух (calc.js ставит .is-many), итог остаётся своей высоты,
+   а курс поднимается под него, в правую колонку */
+@media (min-width: 721px) and (max-width: 1600px) {
+  .result {
+    grid-row: 1 / span 2;
   }
 
-  /* строка 1: проба и кнопка удаления; строка 2: вес и количество; строка 3: стоимость */
-  .field-probe {
-    grid-column: 1 / 3;
-  }
-
-  .btn-icon {
-    grid-column: 3;
+  .is-many .result {
     grid-row: 1;
   }
 
-  .subtotal {
-    grid-column: 1 / -1;
+  .rates {
+    max-height: fit-content; /* курс не тянется за высотой калькулятора */
   }
 
-  [data-show-qty="0"] .subtotal {
-    grid-column: auto;
+  .is-many .rates {
+    grid-column: 2;
+    grid-row: 2;
+  }
+}
+
+/* Планшет в портрете и телефон: всё в одну колонку */
+@media (max-width: 720px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
+    row-gap: 20px;
+  }
+
+  .calc {
+    grid-row: auto;
+  }
+
+  .rates {
+    margin-top: 0;
+  }
+
+  .result {
+    min-height: 0;
+  }
+
+  h2 {
+    font-size: 22px;
   }
 }
 
 /* Телефон */
 @media (max-width: 480px) {
-  .bar > h2 {
-    color: #fff;
-  }
-
   .container {
     gap: 24px;
     padding-top: 20px;
@@ -429,41 +572,19 @@ select {
 
   .hero {
     margin-top: 24px;
-  }
-
-  .lead {
-    display: none;
-  }
-
-  .bar {
-    margin-top: 20px;
-  }
-
-  .board {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
-  }
-
-  .rate-card {
-    padding: 14px;
-  }
-
-  .rate-price {
-    font-size: 26px;
+    font-size: 28px;
   }
 
   .panel {
-    padding: 16px;
+    padding: 18px;
   }
 
-  /* кнопка и «Итого» каждая на своей строке, итог по правому краю */
-  .bar:has(.total) {
-    flex-direction: column;
-    align-items: stretch;
+  .item {
+    padding: 14px;
   }
 
-  .total {
-    text-align: right;
+  .field-qty {
+    flex-basis: 96px;
   }
 }
 
