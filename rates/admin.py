@@ -1,5 +1,6 @@
 from django.contrib import admin
 
+from unfold.admin import ModelAdmin
 from .models import PriceChange, Probe, Profile, QuickWeight
 from .services import delete_probe, save_probe
 
@@ -12,7 +13,7 @@ admin.site.index_title = "Курс металлов и пользователи"
 
 
 @admin.register(Probe)
-class ProbeAdmin(admin.ModelAdmin):
+class ProbeAdmin(ModelAdmin):
     list_display = ("__str__", "price_per_gram", "is_active", "updated_at")
     list_editable = ("price_per_gram", "is_active")
     list_filter = ("metal", "is_active")
@@ -30,14 +31,14 @@ class ProbeAdmin(admin.ModelAdmin):
 
 
 @admin.register(QuickWeight)
-class QuickWeightAdmin(admin.ModelAdmin):
+class QuickWeightAdmin(ModelAdmin):
     list_display = ("__str__", "is_active")
     list_editable = ("is_active",)
     list_filter = ("is_active",)
 
 
 @admin.register(PriceChange)
-class PriceChangeAdmin(admin.ModelAdmin):
+class PriceChangeAdmin(ModelAdmin):
     list_display = (
         "changed_at", "probe_label", "action", "old_price", "new_price", "changed_by",
     )
@@ -56,7 +57,7 @@ class PriceChangeAdmin(admin.ModelAdmin):
         return False
 
 @admin.register(Profile)
-class ProfileAdmin(admin.ModelAdmin):
+class ProfileAdmin(ModelAdmin):
     fields = ("username", "first_name", "last_name", "email", "password_link")
     readonly_fields = ("username", "password_link")
     list_display = ("username", "first_name", "last_name", "email")
