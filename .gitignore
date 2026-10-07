@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Виртуальное окружение
+venv/
+.venv/
+env/
+
+# Секреты и локальные настройки
+.env
+.env.*
+!.env.example
+
+# Django
+db.sqlite3
+db.sqlite3-journal
+*.sqlite3
+/media/
+/staticfiles/
+*.log
+
+# Docker (данные локальной базы)
+/pgdata/
+
+# macOS
+.DS_Store
+
+# Редакторы
+.vscode/
+.idea/
+*.swp
