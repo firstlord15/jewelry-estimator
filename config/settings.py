@@ -11,25 +11,25 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
-
 import environ
-
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# env
+env = environ.Env()
+environ.Env.read_env(BASE_DIR / ".env")
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-q#8c$o@@a9lwf2b_r%t28@#&2saeefd1-r#+13p1@=^+l58$mq'
+SECRET_KEY = env.str("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env.bool("DEBUG", default=False)
 
-ALLOWED_HOSTS = ['192.168.1.192', '127.0.0.1', 'localhost']
-
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
 
 # Application definition
 
@@ -75,10 +75,6 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
-env = environ.Env()
-environ.Env.read_env(BASE_DIR / ".env")
-
 DATABASES = {
     'default': env.db("DATABASE_URL")
 }
@@ -106,15 +102,16 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
-LANGUAGE_CODE = "ru"
+LANGUAGE_CODE = env.str("LANGUAGE_CODE")
 
-TIME_ZONE = "Asia/Bishkek"
+TIME_ZONE = env.str("TIME_ZONE")
 
 USE_I18N = True
 
 USE_TZ = True
 
-CALC_SHOW_QUANTITY = False
+CALC_SHOW_QUANTITY = env.bool("CALC_SHOW_QUANTITY", default=False)
+CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
 
 
 # Static files (CSS, JavaScript, Images)
