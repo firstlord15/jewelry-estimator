@@ -129,6 +129,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',  # раздаёт статику в продакшене, сразу после SecurityMiddleware
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware',  # язык по cookie/заголовку, после сессий и до CommonMiddleware
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -193,6 +194,13 @@ LANGUAGE_CODE = env.str("LANGUAGE_CODE")
 TIME_ZONE = env.str("TIME_ZONE")
 
 USE_I18N = True
+
+# Языки сайта. Название выводится в переключателе языка
+LANGUAGES = [
+    ("ru", "Русский"),
+    ("ky", "Кыргызча"),
+    ("en", "English"),
+]
 
 USE_TZ = True
 
