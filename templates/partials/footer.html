@@ -1,5 +1,18 @@
+{% load i18n %}
+{% url 'rates:index' as home_url %}
 <footer class="site-footer">
-    <div class="container">
-        <p class="muted small">© {% now "Y" %} {{ SITE_NAME }}</p>
+    <div class="container site-footer__inner">
+        <p class="site-footer__copy">© {% now "Y" %} {{ SITE_NAME }}</p>
+
+        <nav class="site-footer__links" aria-label="{% trans 'Информация' %}">
+            <a href="#">{% trans "О нас" %}</a>
+        </nav>
+
+        {# Соцсети: ссылки пока ведут на главную, потом заменим на реальные адреса #}
+        <div class="site-footer__social">
+            <a class="social" href="{{ home_url }}" aria-label="Instagram">{% include "icons/instagram.svg" %}</a>
+            <a class="social" href="{{ home_url }}" aria-label="WhatsApp">{% include "icons/whatsapp.svg" %}</a>
+            <a class="social" href="{{ home_url }}" aria-label="Telegram">{% include "icons/telegram.svg" %}</a>
+        </div>
     </div>
 </footer>

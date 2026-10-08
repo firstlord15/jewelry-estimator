@@ -1,3 +1,85 @@
+/* ---------- Подвал: тот же фон и размытие, что у шапки, граница сверху ---------- */
+
 .site-footer {
   margin-top: auto;
+  background: var(--header-bg);
+  -webkit-backdrop-filter: blur(var(--header-blur)) saturate(140%);
+  backdrop-filter: blur(var(--header-blur)) saturate(140%);
+  border-top: 1px solid var(--glass-border);
+}
+
+/* .container по умолчанию колонка с большими отступами: здесь три зоны с компактными, «О нас» строго по центру */
+.site-footer__inner {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 16px 32px;
+  padding-block: 20px;
+}
+
+.site-footer__social {
+  justify-self: end;
+}
+
+.site-footer__copy {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.site-footer__links,
+.site-footer__social {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.site-footer__links a {
+  padding: 10px 4px;
+  font-size: 15px;
+}
+
+/* Иконка соцсети: область нажатия 44×44 */
+.social {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  color: var(--ink);
+  transition: color 0.15s;
+}
+
+.social .icon {
+  width: 24px;
+  height: 24px;
+}
+
+@media (hover: hover) {
+  .social:hover,
+  .site-footer__links a:hover {
+    color: var(--gold-bright);
+  }
+}
+
+/* Телефон: всё в столбик по центру */
+@media (max-width: 600px) {
+  .site-footer__inner {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    gap: 8px;
+    text-align: center;
+  }
+
+  .site-footer__social {
+    justify-self: center;
+  }
+
+  .site-footer__copy {
+    order: 3; /* копирайт внизу */
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .social {
+    transition: none;
+  }
 }
