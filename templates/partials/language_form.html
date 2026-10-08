@@ -1,0 +1,12 @@
+{% load i18n %}
+{% get_current_language as CURRENT_LANG %}
+{% get_available_languages as AVAILABLE %}
+{% get_language_info_list for AVAILABLE as languages %}
+{# Переключение языка: стандартное представление Django set_language (см. config/urls.py). Названия языков родные #}
+<form class="lang-form" action="{% url 'set_language' %}" method="post">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ request.get_full_path }}" />
+    {% for language in languages %}
+    <button type="submit" name="language" value="{{ language.code }}"{% if language.code == CURRENT_LANG %} aria-current="true"{% endif %}>{{ language.name_local|capfirst }}</button>
+    {% endfor %}
+</form>

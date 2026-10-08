@@ -1,23 +1,90 @@
-{% load static i18n %}
+{% load i18n %}
+{% get_current_language as CURRENT_LANG %}
+{% url 'rates:index' as calculator_url %}
 <header class="site-header">
     <div class="container site-header__inner">
-        <a class="logo" href="{% url 'rates:index' %}">
-            <img src="{% static 'img/logo.svg' %}" alt="" width="32" height="32" />
+        <a class="logo" href="{{ calculator_url }}" aria-label="{{ SITE_NAME }}">
+            {% include "icons/logo.svg" %}
             <span>{{ SITE_NAME }}</span>
         </a>
 
-        <button class="burger" aria-expanded="false" aria-controls="menu" aria-label="{% trans 'Меню' %}"><span></span><span></span><span></span></button>
+        {% comment %}
+            По центру: каталог (ссылка), поиск, избранное, корзина, калькулятор.
+            На телефоне этот блок становится панелью бургера, и подписи рядом с иконками видны.
+        {% endcomment %}
+        <div class="header-icons" id="menu">
+            <a class="action" href="#">
+                {% include "icons/menu.svg" %}
+                <span class="action-label">{% trans "Каталог" %}</span>
+            </a>
 
-        <nav id="menu" class="site-nav">
-            <a href="#">{% trans "Главная" %}</a>
-            <a href="#">{% trans "Каталог" %}</a>
-            <a href="{% url 'rates:index' %}" aria-current="page">{% trans "Калькулятор" %}</a>
-            <a href="#">{% trans "О нас" %}</a>
-        </nav>
+            <button class="action" type="button" data-open-search>
+                {% include "icons/search.svg" %}
+                <span class="action-label">{% trans "Поиск" %}</span>
+            </button>
 
-        <div class="site-actions">
-            <a href="#" aria-label="{% trans 'Избранное' %}">♡<span class="badge">0</span></a>
-            <a href="#" aria-label="{% trans 'Корзина' %}">🛒<span class="badge">0</span></a>
+            <a class="action" href="#">
+                {% include "icons/heart.svg" %}
+                <span class="action-label">{% trans "Избранное" %}</span>
+                <span class="badge" data-badge="favorites" data-count="0">0</span>
+            </a>
+
+            <a class="action" href="#">
+                {% include "icons/cart.svg" %}
+                <span class="action-label">{% trans "Корзина" %}</span>
+                <span class="badge" data-badge="cart" data-count="0">0</span>
+            </a>
+
+            <a class="action" href="{{ calculator_url }}"{% if request.path == calculator_url %} aria-current="page"{% endif %}>
+                {% include "icons/calculator.svg" %}
+                <span class="action-label">{% trans "Калькулятор" %}</span>
+            </a>
+
+            {# Только телефон: вход и язык (на компьютере они справа в шапке) #}
+            <div class="panel-extra">
+                {% include "partials/account_links.html" %}
+                {% include "partials/language_form.html" %}
+            </div>
+        </div>
+
+        <button class="burger" type="button" data-toggle="menu" aria-expanded="false" aria-controls="menu" aria-label="{% trans 'Меню' %}">
+            {% include "icons/menu.svg" %}
+            {% include "icons/close.svg" %}
+        </button>
+
+        {# Справа (только компьютер): язык и вход. На телефоне они в панели каталога #}
+        <div class="header-end">
+            <div class="dropdown">
+                <button class="dropdown-btn lang-btn" type="button" data-toggle="lang-menu" aria-expanded="false" aria-haspopup="true" aria-label="{% trans 'Язык' %}">
+                    <span>{{ CURRENT_LANG|upper }}</span>
+                    {% include "icons/chevron.svg" %}
+                </button>
+                <div class="dropdown-menu" id="lang-menu">{% include "partials/language_form.html" %}</div>
+            </div>
+
+            <div class="dropdown">
+                <button class="dropdown-btn profile-btn" type="button" data-toggle="profile-menu" aria-expanded="false" aria-haspopup="true">
+                    {% include "icons/user.svg" %}
+                    <span>{% if user.is_authenticated %}{{ user.get_short_name|default:user.get_username }}{% else %}{% trans "Войти" %}{% endif %}</span>
+                    {% include "icons/chevron.svg" %}
+                </button>
+                <div class="dropdown-menu" id="profile-menu">{% include "partials/account_links.html" %}</div>
+            </div>
         </div>
     </div>
+
 </header>
+
+{# Окно поиска поверх страницы. Результаты подставятся, когда появится каталог #}
+<dialog class="search-dialog" id="search-dialog" aria-label="{% trans 'Поиск' %}">
+    <div class="search-dialog__inner">
+        <form class="search-form" action="#" method="get" role="search">
+            {% include "icons/search.svg" %}
+            <input type="search" name="q" placeholder="{% trans 'Название или артикул' %}" autocomplete="off" aria-label="{% trans 'Поиск по каталогу' %}" />
+            <button type="button" class="search-close" data-close-search aria-label="{% trans 'Закрыть' %}">{% include "icons/close.svg" %}</button>
+        </form>
+        <div class="search-results" id="search-results" aria-live="polite">
+            <p class="muted">{% trans "Начните вводить название или артикул изделия." %}</p>
+        </div>
+    </div>
+</dialog>

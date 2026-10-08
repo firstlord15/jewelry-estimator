@@ -1,5 +1,4 @@
-{% load static i18n %}
-{% get_current_language as LANGUAGE_CODE %}
+{% load static i18n %} {% get_current_language as LANGUAGE_CODE %}
 <!doctype html>
 <html lang="{{ LANGUAGE_CODE }}">
     <head>
@@ -8,14 +7,16 @@
         <title>{% block title %}{{ SITE_NAME }}{% endblock %}</title>
         <meta name="description" content="{% block description %}{% endblock %}" />
         <link rel="stylesheet" href="{% static 'css/base.css' %}" />
+        <link rel="stylesheet" href="{% static 'css/partials/header.css' %}" />
+        <link rel="stylesheet" href="{% static 'css/partials/footer.css' %}" />
+
         {% block extra_css %}{% endblock %}
     </head>
     <body {% block body_attrs %}{% endblock %}>
+        <a class="skip-link" href="#content">{% trans "Перейти к содержимому" %}</a>
         <div class="page">
             {% include "partials/header.html" %}
-            <main class="container">
-                {% block content %}{% endblock %}
-            </main>
+            <main class="container" id="content" tabindex="-1">{% block content %}{% endblock %}</main>
             {% include "partials/footer.html" %}
         </div>
 

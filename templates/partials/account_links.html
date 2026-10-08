@@ -1,0 +1,12 @@
+{% load i18n %}
+{# Пункты профиля: ссылки пока заглушки, появятся вместе со страницами аккаунта #}
+<div class="account-links">
+    {% if user.is_authenticated %}
+    <a href="#">{% trans "Мой профиль" %}</a>
+    <a href="#">{% trans "Мои заказы" %}</a>
+    <a href="#">{% trans "Выйти" %}</a>
+    {% else %}
+    <a href="#">{% trans "Войти" %}</a>
+    <a href="#">{% trans "Регистрация" %}</a>
+    {% endif %}
+</div>
