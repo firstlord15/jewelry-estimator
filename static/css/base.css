@@ -16,7 +16,7 @@
   --silver-tint: rgba(201, 208, 220, 0.18);
 
   /* «Стекло» поверх тёмной картинки */
-  --glass-bg: linear-gradient(145deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02));
+  --glass-bg: linear-gradient(145deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.001));
   --glass-border: rgba(255, 255, 255, 0.08);
   --glass-shine: rgba(255, 255, 255, 0.06);
   --glass-shadow: rgba(0, 0, 0, 0.35);
@@ -33,6 +33,11 @@
   /* Фон страницы: затемнение поверх картинки */
   --overlay-from: rgb(3 3 3 / 80%);
   --overlay-to: rgb(59 59 59 / 80%);
+
+  /* Шапка и выпадающие меню: чтобы убавить размытие или прозрачность, меняйте эти значения */
+  --header-bg: rgba(24, 24, 27, 0.3);
+  --header-blur: 100px;
+  --menu-bg: rgba(30, 30, 34, 0.94);
 
   --font-btn: math;
   --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -75,6 +80,11 @@ body {
   font: 16px/1.5 var(--font);
 }
 
+a {
+  color: var(--ink);
+  text-decoration: none;
+}
+
 h1,
 h2,
 p {
@@ -97,7 +107,7 @@ h2 {
   font-size: 22px;
 }
 
-:is(input, button):focus-visible {
+:is(a, input, button, select, textarea, summary):focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 1px;
 }
@@ -129,7 +139,7 @@ h2 {
   gap: 32px;
   max-width: 1440px;
   margin: 0 auto;
-  padding: 32px max(16px, env(safe-area-inset-right)) calc(64px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  padding: 24px;
 }
 
 .panel {
@@ -243,6 +253,65 @@ h2 {
   color: var(--on-accent);
   background: var(--accent);
   border-color: var(--accent);
+}
+
+/* Текст только для скринридеров (подпись у иконок) */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Ссылка «Перейти к содержимому»: видна только при фокусе с клавиатуры */
+.skip-link {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 1000;
+  padding: 10px 16px;
+  color: var(--on-gold);
+  background: var(--gold-bright);
+  border-radius: 999px;
+  transform: translateY(-200%);
+}
+
+.skip-link:focus-visible {
+  transform: none;
+}
+
+/* ---------- Иконки ---------- */
+
+/* SVG-иконки вставляются в HTML и красятся через color (fill="currentColor") */
+.icon {
+  flex: none;
+  width: 1.5em;
+  height: 1.5em;
+}
+
+/* Счётчик на иконке (корзина, избранное): ставится поверх родителя с position: relative */
+.badge {
+  position: absolute;
+  top: -7px;
+  right: -9px;
+  display: grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  font: 700 11px/1 var(--font);
+  font-variant-numeric: tabular-nums;
+  color: var(--on-gold);
+  background: var(--gold-bright);
+  border-radius: 999px;
+  box-shadow: 0 0 0 2px var(--bg);
+}
+
+.badge[data-count="0"] {
+  display: none;
 }
 
 /* ---------- Формы ---------- */
