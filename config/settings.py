@@ -30,11 +30,15 @@ UNFOLD = {
     "SITE_SUBHEADER": _("Управление"),   # подпись под ним (необязательно)
     "SITE_URL": "/",                     # куда ведёт ссылка «на сайт»
     "SITE_SYMBOL": "diamond",            # иконка Material Symbols, пока нет логотипа
-    # Когда будет логотип, положить файл в static/img/.
-    # "SITE_LOGO": lambda request: static("img/logo.svg"),
-    # "SITE_LOGO": {"light": lambda r: static("img/logo.svg"), "dark": lambda r: static("img/logo-light.svg")},
-    # "SITE_ICON": lambda request: static("img/icon.svg"),
-    # "SITE_FAVICONS": [{"rel": "icon", "sizes": "32x32", "type": "image/png", "href": lambda r: static("img/favicon.png")}],
+    # Иконка (логотип) рядом с названием в боковой панели и на странице входа.
+    # Для светлой и тёмной темы админки свой цвет; файлы лежат в static/img/
+    "SITE_ICON": {
+        "light": lambda request: static("img/admin-logo-light.svg"),
+        "dark": lambda request: static("img/admin-logo-dark.svg"),
+    },
+    "SITE_FAVICONS": [
+        {"rel": "icon", "type": "image/svg+xml", "href": lambda request: static("img/favicon.svg")},
+    ],
 
     "SHOW_HISTORY": True,
     "SHOW_VIEW_ON_SITE": True,
