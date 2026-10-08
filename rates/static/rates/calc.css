@@ -1,137 +1,3 @@
-/* ---------- Переменные ---------- */
-
-:root {
-  --bg: #343536;
-  --ink: #e9ecf2;
-  --muted: #9aa2b3;
-  --focus: #8ea9ff;
-  --highlight-gold: #c5a15a;
-
-  /* Цвета металлов: проба и текст на ней, подсветка строки курса */
-  --gold-bright: #e2b654;
-  --silver-bright: #c9d0dc;
-  --on-gold: #1a1408;
-  --on-silver: #14171c;
-  --gold-tint: rgba(226, 182, 84, 0.22);
-  --silver-tint: rgba(201, 208, 220, 0.18);
-
-  /* «Стекло» поверх тёмной картинки */
-  --glass-bg: linear-gradient(145deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02));
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-shine: rgba(255, 255, 255, 0.06);
-  --glass-shadow: rgba(0, 0, 0, 0.35);
-  --glass-fallback: rgba(30, 30, 34, 0.9);
-  --glass-hover: rgba(255, 255, 255, 0.09);
-  --glass-hover-border: rgba(255, 255, 255, 0.14);
-  --soft: rgba(255, 255, 255, 0.05); /* вложенные плашки: изделие, чипы, переключатель */
-
-  /* Металл по умолчанию, если пришёл не золото и не серебро */
-  --accent: var(--ink);
-  --on-accent: var(--on-silver);
-  --tint: var(--glass-hover);
-
-  /* Фон страницы: затемнение поверх картинки */
-  --overlay-from: rgb(3 3 3 / 80%);
-  --overlay-to: rgb(59 59 59 / 80%);
-
-  --font-btn: math;
-  --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --font-head: Georgia, "Times New Roman", serif;
-  --font-num: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  color-scheme: dark; /* страница всегда тёмная, светлой темы нет */
-}
-
-/* Цвета металла получает любой элемент с data-metal: изделие, чип, строка курса */
-[data-metal="gold"] {
-  --accent: var(--gold-bright);
-  --on-accent: var(--on-gold);
-  --tint: var(--gold-tint);
-}
-
-[data-metal="silver"] {
-  --accent: var(--silver-bright);
-  --on-accent: var(--on-silver);
-  --tint: var(--silver-tint);
-}
-
-/* ---------- Основа ---------- */
-
-* {
-  box-sizing: border-box;
-}
-
-html {
-  -webkit-text-size-adjust: 100%; /* iOS не раздувает шрифт при повороте экрана */
-}
-
-[hidden] {
-  display: none !important;
-}
-
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--ink);
-  font: 16px/1.5 var(--font);
-}
-
-h1,
-h2,
-p {
-  margin: 0;
-}
-
-h1,
-h2 {
-  font-weight: 400;
-  text-wrap: balance;
-}
-
-h1 {
-  font-family: var(--font-head);
-  font-size: 40px;
-  line-height: 1.15;
-}
-
-h2 {
-  font-size: 22px;
-}
-
-:is(input, button):focus-visible {
-  outline: 2px solid var(--focus);
-  outline-offset: 1px;
-}
-
-/* ---------- Раскладка страницы ---------- */
-
-.page {
-  position: relative;
-  isolation: isolate;
-  min-height: 100vh;
-  min-height: 100dvh;
-}
-
-/* Фон не скроллится вместе со страницей. Через fixed-слой, потому что iOS игнорирует background-attachment: fixed */
-.page::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  background-image: linear-gradient(130deg, var(--overlay-from), var(--overlay-to)), url(img/background.png);
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-}
-
-.container {
-  display: flex;
-  flex-direction: column;
-  gap: 32px;
-  max-width: 1440px;
-  margin: 0 auto;
-  padding: 32px max(16px, env(safe-area-inset-right)) calc(64px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
-}
-
 .hero {
   margin-top: 60px;
 }
@@ -148,111 +14,6 @@ h2 {
 
 .calc {
   grid-row: 1 / span 2;
-}
-
-.panel {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding: 24px;
-  border-radius: 28px;
-}
-
-/* ---------- Текст ---------- */
-
-.highlight-text {
-  color: var(--highlight-gold);
-}
-
-.muted {
-  color: var(--muted);
-}
-
-.small {
-  font-size: 13px;
-  margin-top: auto;
-}
-
-.note {
-  padding-top: 16px;
-  font-size: 13px;
-  color: var(--muted);
-  border-top: 1px solid var(--glass-border);
-}
-
-/* ---------- «Стекло» ---------- */
-
-.glass,
-.btn-icon {
-  background: var(--glass-bg);
-  -webkit-backdrop-filter: blur(18px) saturate(140%);
-  backdrop-filter: blur(18px) saturate(140%);
-  border: 1px solid var(--glass-border);
-  border-radius: 14px;
-  box-shadow:
-    inset 0 1px 0 var(--glass-shine),
-    0 12px 32px var(--glass-shadow);
-}
-
-/* Если браузер не умеет размывать фон, делаем карточку плотнее, чтобы текст читался */
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .glass,
-  .btn-icon {
-    background: var(--glass-fallback);
-  }
-}
-
-/* ---------- Переключатель металла и чипы ---------- */
-
-.segmented {
-  display: flex;
-  gap: 4px;
-  padding: 4px;
-  background: var(--soft);
-  border-radius: 999px;
-}
-
-.segment,
-.chip {
-  font: 600 14px var(--font);
-  color: var(--ink);
-  cursor: pointer;
-}
-
-.segment {
-  flex: 1;
-  padding: 8px 18px;
-  background: transparent;
-  border: 0;
-  border-radius: 999px;
-}
-
-.chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.chip {
-  padding: 8px 18px;
-  font-size: 15px;
-  font-variant-numeric: tabular-nums;
-  background: var(--soft);
-  border: 1px solid var(--glass-border);
-  border-radius: 999px;
-}
-
-.chips-quick .chip {
-  padding: 5px 13px;
-  font-size: 13px;
-  color: var(--muted);
-}
-
-/* Выбранный чип или сегмент красится в цвет своего металла */
-:is(.segment, .chip)[aria-pressed="true"] {
-  color: var(--on-accent);
-  background: var(--accent);
-  border-color: var(--accent);
 }
 
 /* ---------- Изделия ---------- */
@@ -298,30 +59,9 @@ h2 {
   flex: 0 0 110px;
 }
 
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--muted);
-}
-
 .input-wrap {
   position: relative;
   display: block;
-}
-
-input {
-  width: 100%;
-  min-width: 0;
-  padding: 11px 18px;
-  font: 16px var(--font);
-  color: var(--ink);
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: 999px;
 }
 
 .input-wrap input {
@@ -423,16 +163,6 @@ input {
   width: 100%;
 }
 
-/* ---------- Курс ---------- */
-
-.panel-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
 .rates-cols,
 .rate-row {
   display: flex;
@@ -464,43 +194,12 @@ input {
   background: var(--tint);
 }
 
-/* ---------- Кнопки ---------- */
-
-.btn-icon {
-  flex: none;
-  width: 38px;
-  height: 38px;
-  padding: 0;
-  font: 20px var(--font-btn);
-  color: var(--muted);
-  border-radius: 50%;
-  cursor: pointer;
-}
-
-.btn-icon:disabled {
-  opacity: 0.35;
-  cursor: default;
-}
-
 /* «+» справа в шапке калькулятора */
 .btn-add {
   font-size: 28px;
   font-weight: 300;
   line-height: 1;
   color: var(--highlight-gold);
-}
-
-/* Hover только там, где есть мышь: на тачскринах он «залипает» */
-@media (hover: hover) {
-  .btn-icon:hover:not(:disabled) {
-    background-color: var(--glass-hover);
-    border-color: var(--glass-hover-border);
-  }
-
-  .segment:not([aria-pressed="true"]):hover,
-  .chip:not([aria-pressed="true"]):hover {
-    background: var(--glass-hover);
-  }
 }
 
 /* ---------- Адаптивность ---------- */
@@ -567,18 +266,10 @@ input {
 
 /* Телефон */
 @media (max-width: 480px) {
-  .container {
-    gap: 24px;
-    padding-top: 20px;
-  }
 
   .hero {
     margin-top: 24px;
     font-size: 28px;
-  }
-
-  .panel {
-    padding: 18px;
   }
 
   .item {
