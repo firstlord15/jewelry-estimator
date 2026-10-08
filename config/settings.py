@@ -25,8 +25,8 @@ from django.utils.translation import gettext_lazy as _
 
 UNFOLD = {
     # --- название и логотип ---
-    "SITE_TITLE": "Gold Store",          # вкладка браузера
-    "SITE_HEADER": "Gold Store",         # заголовок в боковой панели
+    "SITE_TITLE": env.str("SITE_NAME"),          # вкладка браузера
+    "SITE_HEADER": env.str("SITE_NAME"),         # заголовок в боковой панели
     "SITE_SUBHEADER": _("Управление"),   # подпись под ним (необязательно)
     "SITE_URL": "/",                     # куда ведёт ссылка «на сайт»
     "SITE_SYMBOL": "diamond",            # иконка Material Symbols, пока нет логотипа
