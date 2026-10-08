@@ -1,0 +1,23 @@
+{% load static i18n %}
+<header class="site-header">
+    <div class="container site-header__inner">
+        <a class="logo" href="{% url 'rates:index' %}">
+            <img src="{% static 'img/logo.svg' %}" alt="" width="32" height="32" />
+            <span>{{ SITE_NAME }}</span>
+        </a>
+
+        <button class="burger" aria-expanded="false" aria-controls="menu" aria-label="{% trans 'Меню' %}"><span></span><span></span><span></span></button>
+
+        <nav id="menu" class="site-nav">
+            <a href="#">{% trans "Главная" %}</a>
+            <a href="#">{% trans "Каталог" %}</a>
+            <a href="{% url 'rates:index' %}" aria-current="page">{% trans "Калькулятор" %}</a>
+            <a href="#">{% trans "О нас" %}</a>
+        </nav>
+
+        <div class="site-actions">
+            <a href="#" aria-label="{% trans 'Избранное' %}">♡<span class="badge">0</span></a>
+            <a href="#" aria-label="{% trans 'Корзина' %}">🛒<span class="badge">0</span></a>
+        </div>
+    </div>
+</header>
