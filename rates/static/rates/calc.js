@@ -2,19 +2,17 @@
 
 (() => {
   const API_URL = "/api/rates/";
-  const STORAGE_KEY = "jewelry-calc-items";
+  const STORAGE_KEY = "jewelry-calc-item";
   const SHOW_QTY = document.body.dataset.showQty === "1";
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
-  let itemsRendered = false;
-  const itemNodes = new WeakMap(); // изделие -> его блок на странице; блоки пересоздаются, изделия остаются
+  let rendered = false;
 
   const state = {
     rates: [],
     quickWeights: [], // быстрые веса из админки, числами
     currency: "сом",
-    items: [],
-    active: null, // изделие, чья проба подсвечена в таблице курса
+    item: { probeId: null, grams: "", qty: "1" },
     boardMetal: null, // металл, показанный в таблице курса
   };
 
@@ -39,27 +37,23 @@
     return Number.isFinite(n) && n > 0 ? n : 0;
   }
 
-  // ---------- Сохранение блоков в браузере ----------
+  // ---------- Сохранение изделия в браузере ----------
 
-  function loadItems() {
+  function loadItem() {
     try {
       const data = JSON.parse(localStorage.getItem(STORAGE_KEY));
-      return Array.isArray(data) && data.length ? data : null;
+      return data && typeof data === "object" ? data : null;
     } catch {
       return null;
     }
   }
 
-  function saveItems() {
+  function saveItem() {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state.items));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state.item));
     } catch {
       // приватный режим или запрет cookie: просто не сохраняем
     }
-  }
-
-  function newItem() {
-    return { probeId: defaultProbeId(), grams: "", qty: "1" };
   }
 
   // ---------- Металлы и кнопки ----------
@@ -93,9 +87,9 @@
     );
   }
 
-  // Строки выбранного металла; проба активного изделия подсвечена
+  // Строки выбранного металла; проба изделия подсвечена
   function syncBoard() {
-    state.boardMetal ??= metalOf(state.active?.probeId) ?? state.rates[0]?.metal ?? null;
+    state.boardMetal ??= metalOf(state.item.probeId) ?? state.rates[0]?.metal ?? null;
 
     for (const button of $$("#board-metals .segment")) {
       setPressed(button, button.dataset.metal === state.boardMetal);
@@ -106,27 +100,16 @@
       .map((rate) => {
         const row = createElement("div", "rate-row");
         row.dataset.metal = rate.metal;
-        row.classList.toggle("is-active", rate.id === state.active?.probeId);
+        row.classList.toggle("is-active", rate.id === state.item.probeId);
         row.append(createElement("span", "", rate.fineness), createElement("span", "", `${money.format(pricePerGram(rate))} ${state.currency}`));
         return row;
       });
     $("#board").replaceChildren(...rows);
   }
 
-  function setActive(item) {
-    animateChange(() => {
-      state.active = item;
-      state.boardMetal = metalOf(item.probeId) ?? state.boardMetal;
-      syncBoard();
-    });
-  }
-
-  // ---------- Блоки изделий ----------
-
   // ---------- Анимация смены размеров и мест ----------
   //
-  // Калькулятор, итог, курс и сами изделия меняют размер и место скачком: при добавлении и удалении
-  // изделия, при смене металла (меняется число проб), когда раскладка зависит от числа изделий.
+  // Калькулятор и курс меняют размер скачком, когда меняется металл (меняется число проб).
   // animateChange запоминает вид «до», выполняет изменение и плавно ведёт каждый блок в вид «после».
 
   let layoutAnimations = [];
@@ -134,18 +117,15 @@
   const rectOf = (node) => node.getBoundingClientRect();
 
   function animateChange(change) {
-    if (inChange || !itemsRendered || reduceMotion.matches) {
+    if (inChange || !rendered || reduceMotion.matches) {
       change();
-      if (!inChange) syncCalcBase();
       return;
     }
 
     const panels = $$(".panel");
-    const itemNodesNow = state.items.filter((item) => itemNodes.has(item)).map((item) => itemNodes.get(item));
     const panelsBefore = panels.map(rectOf);
-    const itemsBefore = new Map(state.items.filter((item) => itemNodes.has(item)).map((item) => [item, rectOf(itemNodes.get(item))]));
     // прерванную анимацию снимаем уже после замера: он учитывает то, что человек видит сейчас
-    [...panels, ...itemNodesNow].forEach((node) => node.getAnimations().filter((animation) => !("animationName" in animation)).forEach((animation) => animation.cancel()));
+    panels.forEach((panel) => panel.getAnimations().forEach((animation) => animation.cancel()));
 
     // Сетка могла остаться замороженной от прерванной анимации: размораживаем до изменения,
     // иначе итоговые размеры строк мы бы считали по старым замороженным
@@ -157,15 +137,12 @@
     } finally {
       inChange = false;
     }
-    syncCalcBase();
 
     // все замеры «после» делаем до старта первой анимации: она сама меняет размеры
     const layout = $(".layout");
     const { gridTemplateColumns, gridTemplateRows } = getComputedStyle(layout);
     const panelsAfter = panels.map(rectOf);
-    const itemsAfter = new Map(state.items.filter((item) => itemsBefore.has(item)).map((item) => [item, rectOf(itemNodes.get(item))]));
 
-    animateItems(itemsBefore, itemsAfter);
     const animations = animatePanels(panels, panelsBefore, panelsAfter);
     if (!animations.length) return;
 
@@ -180,7 +157,7 @@
   }
 
   // Рамки блоков. На время анимации содержимое обрезается и прижимается к верху, чтобы шапка
-  // («Рассчитайте стоимость», «+») не уезжала вместе с центрированием, пока высота рамки меняется
+  // («Рассчитайте стоимость») не уезжала вместе с центрированием, пока высота рамки меняется
   function animatePanels(panels, before, after) {
     return panels.flatMap((panel, index) => {
       const [from, to] = [before[index], after[index]];
@@ -208,55 +185,44 @@
     });
   }
 
-  // Блоки изделий: съезжают на новое место, а при смене металла ещё и плавно меняют высоту
-  function animateItems(before, after) {
-    for (const [item, to] of after) {
-      const from = before.get(item);
-      const node = itemNodes.get(item);
-      const dy = from.top - to.top;
-      const resized = Math.abs(from.height - to.height) >= 1;
-      if (Math.abs(dy) < 1 && !resized) continue;
-
-      const frame = (box, transform) => ({ transform, ...(resized && { height: `${box.height}px` }) });
-      node.style.overflow = resized ? "hidden" : "";
-      const animation = node.animate([frame(from, `translateY(${dy}px)`), frame(to, "none")], { duration: 200, easing: "ease-out" });
-      animation.onfinish = animation.oncancel = () => (node.style.overflow = "");
-    }
-  }
-
   // Показывает в блоке изделия текущее состояние: металл, пробу, вес, кнопку очистки
-  function syncItem(item, node) {
+  function syncItem() {
+    const item = state.item;
+    const node = $("#item");
     const metal = metalOf(item.probeId);
     if (metal) node.dataset.metal = metal;
 
     for (const segment of $$(".segment", node)) setPressed(segment, segment.dataset.metal === metal);
-    for (const chip of $$(".js-probes .chip", node)) {
+    for (const chip of $$("#probes .chip", node)) {
       chip.hidden = chip.dataset.metal !== metal;
       setPressed(chip, Number(chip.dataset.id) === item.probeId);
     }
     for (const chip of $$("[data-grams]", node)) setPressed(chip, parseNumber(item.grams) === Number(chip.dataset.grams));
-    $(".js-clear", node).hidden = item.grams === "";
+    $("#clear-grams").hidden = item.grams === "";
   }
 
-  // Блок изделия из шаблона: значения из state и обработчики полей
-  function createItemNode(item) {
-    const node = $("#item-template").content.firstElementChild.cloneNode(true);
-    itemNodes.set(item, node);
-    const grams = $(".js-grams", node);
-    const qty = $(".js-qty", node);
-    const remove = $(".js-remove", node);
+  // Кнопки металлов, проб и быстрых весов, значения полей и обработчики
+  function renderItem() {
+    const item = state.item;
+    const grams = $("#grams");
+    const qty = $("#qty");
 
     // Проба могла быть удалена или скрыта, пока человека не было на сайте
     if (!findRate(item.probeId)) item.probeId = defaultProbeId();
 
     const update = () => {
-      syncItem(item, node);
+      syncItem();
       updateTotals();
     };
+    const showOnBoard = () =>
+      animateChange(() => {
+        state.boardMetal = metalOf(item.probeId) ?? state.boardMetal;
+        syncBoard();
+      });
     const chooseProbe = (id) => {
       item.probeId = id;
       update();
-      setActive(item);
+      showOnBoard();
     };
     const setGrams = (value) => {
       item.grams = value;
@@ -264,12 +230,12 @@
       update();
     };
 
-    $(".js-metals", node).append(
+    $("#metals").append(
       ...metals().map(([metal, label]) => {
         const segment = createButton("segment", label, { metal });
         segment.addEventListener("click", () =>
           animateChange(() => {
-            if (metalOf(item.probeId) === metal) return setActive(item);
+            if (metalOf(item.probeId) === metal) return showOnBoard();
             chooseProbe(state.rates.find((rate) => rate.metal === metal).id);
           }),
         );
@@ -277,7 +243,7 @@
       }),
     );
 
-    $(".js-probes", node).append(
+    $("#probes").append(
       ...state.rates.map((rate) => {
         const chip = createButton("chip", rate.fineness, { id: rate.id, metal: rate.metal });
         chip.addEventListener("click", () => chooseProbe(rate.id));
@@ -285,7 +251,7 @@
       }),
     );
 
-    const quick = $(".js-quick", node);
+    const quick = $("#quick");
     quick.hidden = state.quickWeights.length === 0;
     quick.append(
       ...state.quickWeights.map((value) => {
@@ -297,10 +263,9 @@
 
     grams.value = item.grams;
     if (qty) qty.value = item.qty;
-    remove.disabled = state.items.length === 1;
 
     grams.addEventListener("input", () => setGrams(grams.value));
-    $(".js-clear", node).addEventListener("click", () => {
+    $("#clear-grams").addEventListener("click", () => {
       setGrams("");
       grams.focus();
     });
@@ -308,43 +273,14 @@
       item.qty = qty.value;
       updateTotals();
     });
-    remove.addEventListener("click", () => removeItem(item, node));
-    node.addEventListener("focusin", () => {
-      if (state.active !== item) setActive(item);
-    });
 
-    syncItem(item, node);
-    return node;
-  }
-
-  function removeItem(item, node) {
-    $(".js-remove", node).disabled = true;
-    node.classList.add("is-leaving");
-    // ждём конец анимации из CSS; без анимации (reduced motion) список пуст и ждать нечего
-    Promise.allSettled(node.getAnimations().map((animation) => animation.finished)).then(() => {
-      state.items.splice(state.items.indexOf(item), 1);
-      renderItems();
-    });
-  }
-
-  // enterIndex: какой блок только что добавили, чтобы анимировать появление только его
-  function renderItems(enterIndex = -1) {
     animateChange(() => {
-      const container = $("#items");
-      container.replaceChildren();
-
-      state.items.forEach((item, index) => {
-        const node = createItemNode(item);
-        if (index === enterIndex) node.classList.add("is-entering");
-        container.append(node);
-      });
-
-      $(".layout").classList.toggle("is-many", state.items.length > 2); // раскладка планшета, см. calc.css
+      syncItem();
       updateTotals();
-      if (state.items.includes(state.active)) syncBoard();
-      else setActive(state.items[0]);
+      state.boardMetal = metalOf(item.probeId) ?? state.boardMetal;
+      syncBoard();
     });
-    itemsRendered = true; // первый показ при загрузке страницы не анимируем
+    rendered = true; // первый показ при загрузке страницы не анимируем
   }
 
   function itemCost(item) {
@@ -356,18 +292,8 @@
   }
 
   function updateTotals() {
-    const subtotals = $$(".js-subtotal");
-    let total = 0;
-
-    state.items.forEach((item, index) => {
-      const cost = itemCost(item);
-      total += cost;
-      subtotals[index].value = formatMoney(cost);
-    });
-
-    $("#total").value = formatMoney(total);
-    $("#result-count").textContent = `Изделий: ${state.items.length}`;
-    saveItems();
+    $("#total").value = formatMoney(itemCost(state.item));
+    saveItem();
   }
 
   // ---------- Загрузка курса ----------
@@ -401,33 +327,9 @@
     }
 
     initBoardMetals();
-    renderItems();
+    renderItem();
   }
 
-  // Высота калькулятора с одним изделием (без растяжения сеткой): по ней итог не бывает короче калькулятора.
-  // Считаем из высот содержимого, а не самого блока, чтобы не было обратной связи с min-height итога
-  function syncCalcBase() {
-    const calc = $(".calc");
-    const first = $(".item", calc);
-    if (!first) return;
-
-    const style = getComputedStyle(calc);
-    const sides = ["paddingTop", "paddingBottom", "borderTopWidth", "borderBottomWidth"];
-    const frame = sides.reduce((sum, side) => sum + parseFloat(style[side]), 0);
-    const base = frame + $(".panel-head", calc).offsetHeight + parseFloat(style.rowGap) + first.offsetHeight;
-    $(".layout").style.setProperty("--calc-base", `${Math.ceil(base)}px`);
-  }
-
-  // Пересчёт при любом изменении калькулятора: ширина, перенос чипов, смена металла, добавление изделий
-  new ResizeObserver(syncCalcBase).observe($(".calc"));
-
-  $("#add-item").addEventListener("click", () => {
-    state.items.unshift(newItem());
-    renderItems(0);
-    // фокус в поле веса удобен с мышью, а на тачскринах он выдвигает клавиатуру и мешает
-    if (window.matchMedia("(hover: hover)").matches) $(".js-grams").focus();
-  });
-
-  state.items = loadItems() || [newItem()];
+  Object.assign(state.item, loadItem());
   loadRates();
 })();

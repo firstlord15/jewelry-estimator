@@ -2,27 +2,14 @@
   margin-top: 24px;
 }
 
-/* Калькулятор | итог | курс. Итог и курс задают высоту ряда, калькулятор такой же высоты.
-   Когда в нём больше изделий, он занимает вторую строку и растёт один, остальные не меняются.
-   Зазор между строками нулевой, чтобы пустая вторая строка не делала калькулятор выше */
+/* Калькулятор | итог | курс одной высоты: все три блока в одной строке сетки тянутся до самого высокого */
 .layout {
   display: grid;
   grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1fr);
-  grid-template-rows: auto 1fr;
   column-gap: 20px;
 }
 
-.calc {
-  grid-row: 1 / span 2;
-}
-
-/* ---------- Изделия ---------- */
-
-.items {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
+/* ---------- Изделие ---------- */
 
 .item {
   display: flex;
@@ -32,18 +19,7 @@
   background: var(--soft);
   border: 1px solid var(--glass-border);
   border-radius: 22px;
-}
-
-.item-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.item-head .segmented {
-  flex: 1;
-  max-width: 320px;
+  height: 100%;
 }
 
 .item-fields {
@@ -88,52 +64,10 @@
   cursor: pointer;
 }
 
-.item-sum {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--muted);
-}
-
-.item-sum output {
-  font: 600 18px var(--font-num);
-  font-variant-numeric: tabular-nums;
-  color: var(--ink);
-  overflow-wrap: anywhere;
-}
-
-/* Появление и удаление изделия (классы ставит calc.js) */
-.item.is-entering {
-  animation: item-in 0.2s ease-out;
-}
-
-.item.is-leaving {
-  animation: item-out 0.15s ease-in forwards;
-  pointer-events: none;
-}
-
-@keyframes item-in {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-}
-
-@keyframes item-out {
-  to {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
-}
-
 /* ---------- Итог ---------- */
 
 .result {
   align-items: center;
-  min-height: var(--calc-base, 0); /* высота калькулятора с одним изделием, её считает calc.js */
   text-align: center;
 }
 
@@ -194,21 +128,12 @@
   background: var(--tint);
 }
 
-/* «+» справа в шапке калькулятора */
-.btn-add {
-  font-size: 28px;
-  font-weight: 300;
-  line-height: 1;
-  color: var(--highlight-gold);
-}
-
 /* ---------- Адаптивность ---------- */
 
 /* Две колонки: курс уходит под калькулятор и итог */
 @media (max-width: 1600px) {
   .layout {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    grid-template-rows: auto 1fr auto;
   }
 
   .rates {
@@ -217,46 +142,15 @@
   }
 }
 
-/* Планшет: пока изделий мало, итог растянут на высоту калькулятора, а курс лежит под ними.
-   Когда изделий больше двух (calc.js ставит .is-many), итог остаётся своей высоты,
-   а курс поднимается под него, в правую колонку */
-@media (min-width: 721px) and (max-width: 1600px) {
-  .result {
-    grid-row: 1 / span 2;
-  }
-
-  .is-many .result {
-    grid-row: 1;
-  }
-
-  .rates {
-    align-self: start; /* курс не тянется за высотой калькулятора (max-height: fit-content Firefox и Safari не понимают) */
-  }
-
-  .is-many .rates {
-    grid-column: 2;
-    grid-row: 2;
-  }
-}
-
 /* Планшет в портрете и телефон: всё в одну колонку */
 @media (max-width: 720px) {
   .layout {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: none;
     row-gap: 20px;
-  }
-
-  .calc {
-    grid-row: auto;
   }
 
   .rates {
     margin-top: 0;
-  }
-
-  .result {
-    min-height: 0;
   }
 
   h2 {
@@ -271,20 +165,7 @@
     font-size: 28px;
   }
 
-  .item {
-    padding: 14px;
-  }
-
   .field-qty {
     flex-basis: 96px;
-  }
-}
-
-/* ---------- Без анимаций ---------- */
-
-@media (prefers-reduced-motion: reduce) {
-  .item.is-entering,
-  .item.is-leaving {
-    animation: none;
   }
 }

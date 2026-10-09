@@ -14,18 +14,33 @@
 
     <div class="layout">
         <section class="panel glass calc" aria-labelledby="calc-title">
-            <div class="panel-head">
-                <h2 id="calc-title">Рассчитайте стоимость</h2>
-                <button type="button" id="add-item" class="btn-icon btn-add" aria-label="Добавить изделие">+</button>
+            <h2 id="calc-title">Рассчитайте стоимость</h2>
+            <div id="item" class="item">
+                <div class="segmented" id="metals" role="group" aria-label="Металл"></div>
+                <div class="chips" id="probes" role="group" aria-label="Проба"></div>
+                <div class="item-fields">
+                    <label class="field field-weight">
+                        <span>Вес изделия, г</span>
+                        <span class="input-wrap">
+                            <input class="input-num" id="grams" type="text" inputmode="decimal" placeholder="3,5" autocomplete="off" />
+                            <button type="button" class="clear" id="clear-grams" aria-label="Очистить вес" hidden>×</button>
+                        </span>
+                    </label>
+                    {% if show_qty %}
+                    <label class="field field-qty">
+                        <span>Кол-во, шт</span>
+                        <input class="input-num" id="qty" type="number" inputmode="numeric" min="1" step="1" />
+                    </label>
+                    {% endif %}
+                </div>
+                <div class="chips chips-quick" id="quick" role="group" aria-label="Быстрый вес"></div>
             </div>
-            <div id="items" class="items"></div>
         </section>
 
         <section class="panel glass result" aria-labelledby="result-title">
             <div class="result-main">
                 <output id="total" class="result-total">0 сом</output>
                 <h2 id="result-title" class="result-caption">Примерная стоимость</h2>
-                <p id="result-count" class="muted"></p>
             </div>
             <p class="note">Стоимость = цена за грамм × вес{% if show_qty %} × количество{% endif %}. Расчёт ориентировочный, итоговую цену уточняйте у продавца.</p>
         </section>
@@ -44,36 +59,6 @@
             <p id="updated" class="muted small"></p>
         </section>
     </div>
-
-    <template id="item-template">
-        <div class="item">
-            <div class="item-head">
-                <div class="segmented js-metals" role="group" aria-label="Металл"></div>
-                <button type="button" class="btn-icon js-remove" aria-label="Удалить изделие">×</button>
-            </div>
-            <div class="chips js-probes" role="group" aria-label="Проба"></div>
-            <div class="item-fields">
-                <label class="field field-weight">
-                    <span>Вес изделия, г</span>
-                    <span class="input-wrap">
-                        <input class="input-num js-grams" type="text" inputmode="decimal" placeholder="3,5" autocomplete="off" />
-                        <button type="button" class="clear js-clear" aria-label="Очистить вес" hidden>×</button>
-                    </span>
-                </label>
-                {% if show_qty %}
-                <label class="field field-qty">
-                    <span>Кол-во, шт</span>
-                    <input class="input-num js-qty" type="number" inputmode="numeric" min="1" step="1" />
-                </label>
-                {% endif %}
-            </div>
-            <div class="chips chips-quick js-quick" role="group" aria-label="Быстрый вес"></div>
-            <div class="item-sum">
-                <span>Стоимость</span>
-                <output class="js-subtotal">0 сом</output>
-            </div>
-        </div>
-    </template>
 {% endblock %}
 
 {% block extra_js %}
