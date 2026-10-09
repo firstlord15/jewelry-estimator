@@ -11,11 +11,6 @@ from .services import delete_probe, save_probe
 from django.urls import reverse
 from django.utils.html import format_html
 
-admin.site.site_header = "Ювелирный калькулятор"
-admin.site.site_title = "Управление"
-admin.site.index_title = "Курс металлов и пользователи"
-
-
 @admin.register(Probe)
 class ProbeAdmin(ModelAdmin):
     list_display = ("__str__", "price_per_gram", "is_active", "updated_at")

@@ -47,13 +47,13 @@ class IndexPageTests(TestCase):
     @override_settings(CALC_SHOW_QUANTITY=False)
     def test_quantity_hidden(self):
         response = self.client.get(reverse("rates:index"))
-        self.assertNotContains(response, "js-qty")
+        self.assertNotContains(response, 'id="qty"')
         self.assertContains(response, 'data-show-qty="0"')
 
     @override_settings(CALC_SHOW_QUANTITY=True)
     def test_quantity_shown(self):
         response = self.client.get(reverse("rates:index"))
-        self.assertContains(response, "js-qty")
+        self.assertContains(response, 'id="qty"')
         self.assertContains(response, 'data-show-qty="1"')
 
 

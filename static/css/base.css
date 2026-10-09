@@ -183,8 +183,7 @@ h2 {
 
 /* ---------- «Стекло» ---------- */
 
-.glass,
-.btn-icon {
+.glass {
   background: var(--glass-bg);
   -webkit-backdrop-filter: blur(18px) saturate(140%);
   backdrop-filter: blur(18px) saturate(140%);
@@ -197,8 +196,7 @@ h2 {
 
 /* Если браузер не умеет размывать фон, делаем карточку плотнее, чтобы текст читался */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .glass,
-  .btn-icon {
+  .glass {
     background: var(--glass-fallback);
   }
 }
@@ -338,31 +336,8 @@ input {
   color: var(--muted);
 }
 
-/* ---------- Кнопки ---------- */
-
-.btn-icon {
-  flex: none;
-  width: 38px;
-  height: 38px;
-  padding: 0;
-  font: 20px var(--font-btn);
-  color: var(--muted);
-  border-radius: 50%;
-  cursor: pointer;
-}
-
-.btn-icon:disabled {
-  opacity: 0.35;
-  cursor: default;
-}
-
 /* Hover только там, где есть мышь: на тачскринах он «залипает» */
 @media (hover: hover) {
-  .btn-icon:hover:not(:disabled) {
-    background-color: var(--glass-hover);
-    border-color: var(--glass-hover-border);
-  }
-
   .segment:not([aria-pressed="true"]):hover,
   .chip:not([aria-pressed="true"]):hover {
     background: var(--glass-hover);
