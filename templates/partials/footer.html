@@ -1,27 +1,66 @@
 {% load i18n %}
 <footer class="site-footer">
     <div class="container site-footer__inner">
-        {# Слева контакты из «Настроек сайта» (пустые поля не выводятся) и копирайт под ними #}
-        <div class="site-footer__info">
-            <address class="site-footer__contacts">
-                {% if main_phone %}<a href="tel:{{ main_phone.tel }}">{{ main_phone.number }}</a>{% endif %}
-                {% if site_settings.email %}<a href="mailto:{{ site_settings.email }}">{{ site_settings.email }}</a>{% endif %}
-                {% if site_settings.address %}<span>{{ site_settings.address }}</span>{% endif %}
-                {% if site_settings.working_hours %}<span class="muted">{{ site_settings.working_hours }}</span>{% endif %}
+        {# Верх: логотип и главный телефон (первый по порядку в «Настройках сайта») #}
+        <div class="site-footer__top">
+            <a class="logo site-footer__logo" href="{% url 'home' %}">
+                {% include "icons/logo.svg" %}
+                <span>{{ SITE_NAME }}</span>
+            </a>
+            {% if main_phone %}
+            <div class="site-footer__phone">
+                {% if main_phone.label %}<span class="muted">{{ main_phone.label }}</span>{% endif %}
+                <a href="tel:{{ main_phone.tel }}">{{ main_phone.number }}</a>
+            </div>
+            {% endif %}
+        </div>
+
+        {# Середина: блоки ссылок. Пустые поля и блоки не выводятся #}
+        <div class="site-footer__cols">
+            <nav class="footer-col" aria-labelledby="footer-sections">
+                <h3 id="footer-sections">{% trans "Разделы" %}</h3>
+                <a href="{% url 'catalog' %}">{% trans "Каталог" %}</a>
+                <a href="{% url 'calculator' %}">{% trans "Калькулятор" %}</a>
+                <a href="{% url 'favorites' %}">{% trans "Избранное" %}</a>
+                <a href="{% url 'cart' %}">{% trans "Корзина" %}</a>
+            </nav>
+
+            <nav class="footer-col" aria-labelledby="footer-customers">
+                <h3 id="footer-customers">{% trans "Покупателям" %}</h3>
+                <a href="{% url 'about' %}">{% trans "О нас" %}</a>
+                <a href="{% url 'contacts' %}">{% trans "Контакты" %}</a>
+            </nav>
+
+            {% if site_settings.address or site_settings.working_hours or site_settings.email %}
+            <address class="footer-col">
+                <h3>{% trans "Контакты" %}</h3>
+                {% if site_settings.working_hours %}
+                    <span>{{ site_settings.working_hours }}</span>
+                {% endif %}
+                {% if site_settings.email %}
+                    <a href="mailto:{{ site_settings.email }}">{{ site_settings.email }}</a>
+                {% endif %}
+                {% if site_settings.address %}
+                    <span>{{ site_settings.address }}</span>
+                {% endif %}
             </address>
-            <p class="site-footer__copy">© {% now "Y" %} {{ SITE_NAME }}</p>
+            {% endif %} {% if site_settings.instagram or site_settings.whatsapp or site_settings.telegram %}
+            <div class="footer-col">
+                <h3>{% trans "Мы в соцсетях" %}</h3>
+                <div class="site-footer__social">
+                    {% if site_settings.instagram %}
+                    <a class="social" href="{{ site_settings.instagram }}" target="_blank" rel="noopener" aria-label="Instagram">{% include "icons/instagram.svg" %}</a>
+                    {% endif %} {% if site_settings.whatsapp %}
+                    <a class="social" href="{{ site_settings.whatsapp }}" target="_blank" rel="noopener" aria-label="WhatsApp">{% include "icons/whatsapp.svg" %}</a>
+                    {% endif %} {% if site_settings.telegram %}
+                    <a class="social" href="{{ site_settings.telegram }}" target="_blank" rel="noopener" aria-label="Telegram">{% include "icons/telegram.svg" %}</a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
         </div>
 
-        <nav class="site-footer__links" aria-label="{% trans 'Информация' %}">
-            <a href="{% url 'about' %}">{% trans "О нас" %}</a>
-            <a href="{% url 'contacts' %}">{% trans "Контакты" %}</a>
-        </nav>
-
-        {# Соцсети: иконка только у заполненных ссылок #}
-        <div class="site-footer__social">
-            {% if site_settings.instagram %}<a class="social" href="{{ site_settings.instagram }}" target="_blank" rel="noopener" aria-label="Instagram">{% include "icons/instagram.svg" %}</a>{% endif %}
-            {% if site_settings.whatsapp %}<a class="social" href="{{ site_settings.whatsapp }}" target="_blank" rel="noopener" aria-label="WhatsApp">{% include "icons/whatsapp.svg" %}</a>{% endif %}
-            {% if site_settings.telegram %}<a class="social" href="{{ site_settings.telegram }}" target="_blank" rel="noopener" aria-label="Telegram">{% include "icons/telegram.svg" %}</a>{% endif %}
-        </div>
+        {# Низ: копирайт за тонкой линией #}
+        <p class="site-footer__copy">© {% now "Y" %} {{ SITE_NAME }}</p>
     </div>
 </footer>

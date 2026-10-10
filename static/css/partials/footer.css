@@ -8,107 +8,167 @@
   border-top: 1px solid var(--glass-border);
 }
 
-/* .container по умолчанию колонка с большими отступами: здесь три зоны с компактными, «О нас» строго по центру */
+/* Три яруса столбиком: логотип с телефоном, блоки ссылок, копирайт */
 .site-footer__inner {
   display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 16px 32px;
-  padding-block: 20px;
-}
-
-/* Боковые зоны делят место поровну, поэтому «О нас» остаётся по центру при любой длине контактов */
-.site-footer__info,
-.site-footer__social {
-  flex: 1 1 0;
-}
-
-.site-footer__social {
-  justify-content: flex-end;
-}
-
-.site-footer__info {
-  display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 32px;
+  padding-block: 40px 24px;
 }
 
-.site-footer__contacts {
+/* Верх и блоки ссылок стоят на одной сетке из четырёх колонок: телефон в последней колонке,
+   ровно над соцсетями */
+.site-footer__top,
+.site-footer__cols {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 32px 48px;
+}
+
+/* ---------- Верх: логотип и главный телефон ---------- */
+
+/* По нижнему краю: логотип встаёт на одну высоту с номером, подпись номера остаётся выше */
+.site-footer__top {
+  align-items: end;
+}
+
+.site-footer__logo {
+  grid-column: span 3;
+}
+
+.site-footer__phone {
+  grid-column: 4;
+}
+
+/* Логотип крупнее, чем в шапке */
+.site-footer__logo {
+  font-size: 24px;
+}
+
+.site-footer__logo .icon {
+  width: 40px;
+  height: 40px;
+}
+
+.site-footer__phone {
   display: flex;
   flex-direction: column;
   gap: 2px;
   font-size: 14px;
+}
+
+.site-footer__phone a {
+  font: 600 24px/1.2 var(--font);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ---------- Середина: блоки ссылок ---------- */
+
+.footer-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 15px;
   font-style: normal;
 }
 
-/* Контакты в настройках не заполнены: пустой блок не добавляет отступ над копирайтом */
-.site-footer__contacts:not(:has(*)) {
-  display: none;
-}
-
-.site-footer__copy {
+.footer-col h3 {
+  margin: 0 0 4px;
   font-size: 14px;
+  font-weight: 400;
   color: var(--muted);
 }
 
-.site-footer__links,
+/* ---------- Соцсети ---------- */
+
 .site-footer__social {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
-.site-footer__links a {
-  padding: 10px 4px;
-  font-size: 15px;
-}
-
-/* Иконка соцсети: область нажатия 44×44 */
+/* Иконка соцсети в кружке, область нажатия 52×52 */
 .social {
   display: inline-grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
+  width: 52px;
+  height: 52px;
   color: var(--ink);
-  transition: color 0.15s;
+  background: var(--soft);
+  border: 1px solid var(--glass-border);
+  border-radius: 50%;
+  transition:
+    color 0.15s,
+    background-color 0.15s;
 }
 
 .social .icon {
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
+}
+
+/* ---------- Низ: копирайт ---------- */
+
+.site-footer__copy {
+  padding-top: 20px;
+  font-size: 14px;
+  color: var(--muted);
+  border-top: 1px solid var(--glass-border);
 }
 
 @media (hover: hover) {
-  .social:hover,
-  .site-footer__links a:hover,
-  .site-footer__contacts a:hover {
+  .site-footer__phone a:hover,
+  .footer-col a:hover {
     color: var(--gold-bright);
+  }
+
+  .social:hover {
+    color: var(--gold-bright);
+    background: var(--glass-hover);
   }
 }
 
-/* Телефон: всё в столбик по центру */
+/* Планшет и узкое окно: две колонки, телефон над второй */
+@media (max-width: 1200px) {
+  .site-footer__top,
+  .site-footer__cols {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .site-footer__logo {
+    grid-column: 1;
+  }
+
+  .site-footer__phone {
+    grid-column: 2;
+  }
+
+  .site-footer__phone a {
+    font-size: 24px;
+  }
+}
+
+/* Телефон: логотип и номер столбиком на всю ширину, блоки по два в ряд */
 @media (max-width: 600px) {
   .site-footer__inner {
-    flex-direction: column;
-    gap: 8px;
-    text-align: center;
+    gap: 24px;
+    padding-block: 28px 20px;
   }
 
-  .site-footer__social {
-    flex: none;
+  .site-footer__top,
+  .site-footer__cols {
+    gap: 24px 16px;
   }
 
-  .site-footer__contacts {
-    align-items: center;
+  .site-footer__top {
+    row-gap: 16px;
   }
 
-  /* Контакты и копирайт становятся отдельными пунктами столбика, копирайт уходит вниз */
-  .site-footer__info {
-    display: contents;
-  }
-
-  .site-footer__copy {
-    order: 3;
+  .site-footer__logo,
+  .site-footer__phone {
+    grid-column: 1 / -1;
   }
 }
 
