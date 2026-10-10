@@ -88,6 +88,10 @@
   overflow-wrap: anywhere;
 }
 
+.result-total.skeleton {
+  border-radius: 12px;
+}
+
 .result-caption {
   font-size: 18px;
   font-weight: 600;

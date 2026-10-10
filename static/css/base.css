@@ -254,6 +254,37 @@ h2 {
   border-color: var(--accent);
 }
 
+/* ---------- Скелетон ---------- */
+
+/* Заглушка с переливом на месте данных, которые ещё грузятся. Вешается на тот же элемент, что придёт
+   позже (чип, строка), поэтому размеры совпадают и страница не прыгает. Текст внутри невидим */
+.skeleton {
+  color: transparent !important; /* у чипов быстрого веса свой цвет текста с более точным селектором */
+  background: linear-gradient(90deg, var(--soft) 25%, var(--glass-hover) 50%, var(--soft) 75%);
+  background-size: 200% 100%;
+  border-color: transparent;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+  cursor: default;
+  pointer-events: none;
+  user-select: none;
+}
+
+@keyframes skeleton-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+}
+
 /* Текст только для скринридеров (подпись у иконок) */
 .visually-hidden {
   position: absolute;

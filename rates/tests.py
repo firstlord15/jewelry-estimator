@@ -54,6 +54,11 @@ class IndexPageTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Рассчитайте стоимость")
 
+    def test_skeletons_shown_until_rates_load(self):
+        response = self.client.get(reverse("calculator"))
+        self.assertContains(response, 'class="chip skeleton"')
+        self.assertContains(response, 'class="rate-row skeleton"', count=4)
+
     @override_settings(CALC_SHOW_QUANTITY=False)
     def test_quantity_hidden(self):
         response = self.client.get(reverse("calculator"))

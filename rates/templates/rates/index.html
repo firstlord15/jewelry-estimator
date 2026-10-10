@@ -25,8 +25,9 @@
         <section class="panel glass calc" aria-labelledby="calc-title">
             <h2 id="calc-title">{% trans "Рассчитайте стоимость" %}</h2>
             <div id="item" class="item">
-                <div class="segmented" id="metals" role="group" aria-label="{% trans 'Металл' %}"></div>
-                <div class="chips" id="probes" role="group" aria-label="{% trans 'Проба' %}"></div>
+                {# Скелетоны: стоят на месте кнопок, пока calc.js не получит курс и не заменит их #}
+                <div class="segmented" id="metals" role="group" aria-label="{% trans 'Металл' %}"><span class="segment skeleton" aria-hidden="true">&nbsp;</span><span class="segment skeleton" aria-hidden="true">&nbsp;</span></div>
+                <div class="chips" id="probes" role="group" aria-label="{% trans 'Проба' %}"><span class="chip skeleton" aria-hidden="true">000</span><span class="chip skeleton" aria-hidden="true">000</span><span class="chip skeleton" aria-hidden="true">000</span><span class="chip skeleton" aria-hidden="true">000</span></div>
                 <div class="item-fields">
                     <label class="field field-weight">
                         <span>{% trans "Вес изделия, г" %}</span>
@@ -42,13 +43,13 @@
                     </label>
                     {% endif %}
                 </div>
-                <div class="chips chips-quick" id="quick" role="group" aria-label="{% trans 'Быстрый вес' %}"></div>
+                <div class="chips chips-quick" id="quick" role="group" aria-label="{% trans 'Быстрый вес' %}"><span class="chip skeleton" aria-hidden="true">0 г</span><span class="chip skeleton" aria-hidden="true">0 г</span><span class="chip skeleton" aria-hidden="true">0 г</span><span class="chip skeleton" aria-hidden="true">0 г</span><span class="chip skeleton" aria-hidden="true">0 г</span></div>
             </div>
         </section>
 
         <section class="panel glass result" aria-labelledby="result-title">
             <div class="result-main">
-                <output id="total" class="result-total">0 {% trans "сом" %}</output>
+                <output id="total" class="result-total skeleton">0 {% trans "сом" %}</output>
                 <h2 id="result-title" class="result-caption">{% trans "Примерная стоимость" %}</h2>
             </div>
             {# Две целые фразы, а не склейка из кусков: в другом языке порядок слов может быть иным #}
@@ -64,14 +65,15 @@
         <section class="panel glass rates" aria-labelledby="board-title">
             <div class="panel-head">
                 <h2 id="board-title">{% trans "Курс" %}</h2>
-                <div id="board-metals" class="segmented" role="group" aria-label="{% trans 'Металл' %}"></div>
+                <div id="board-metals" class="segmented" role="group" aria-label="{% trans 'Металл' %}"><span class="segment skeleton" aria-hidden="true">&nbsp;</span><span class="segment skeleton" aria-hidden="true">&nbsp;</span></div>
             </div>
             <div class="rates-cols">
                 <span>{% trans "Проба" %}</span>
                 <span>{% trans "Цена за грамм" %}</span>
             </div>
-            <div id="board" class="board"></div>
-            <p id="board-status" class="muted">{% trans "Загружаем курс…" %}</p>
+            <div id="board" class="board"><div class="rate-row skeleton" aria-hidden="true">&nbsp;</div><div class="rate-row skeleton" aria-hidden="true">&nbsp;</div><div class="rate-row skeleton" aria-hidden="true">&nbsp;</div><div class="rate-row skeleton" aria-hidden="true">&nbsp;</div></div>
+            {# Пока идёт загрузка, текст слышат только скринридеры; потом здесь сообщение, если курса нет #}
+            <p id="board-status" class="visually-hidden" role="status">{% trans "Загружаем курс…" %}</p>
             <p id="updated" class="muted small"></p>
         </section>
     </div>

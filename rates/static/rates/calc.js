@@ -236,7 +236,7 @@
       update();
     };
 
-    $("#metals").append(
+    $("#metals").replaceChildren(
       ...metals().map(([metal, label]) => {
         const segment = createButton("segment", label, { metal });
         segment.addEventListener("click", () =>
@@ -249,7 +249,7 @@
       }),
     );
 
-    $("#probes").append(
+    $("#probes").replaceChildren(
       ...state.rates.map((rate) => {
         const chip = createButton("chip", rate.fineness, { id: rate.id, metal: rate.metal });
         chip.addEventListener("click", () => chooseProbe(rate.id));
@@ -259,7 +259,7 @@
 
     const quick = $("#quick");
     quick.hidden = state.quickWeights.length === 0;
-    quick.append(
+    quick.replaceChildren(
       ...state.quickWeights.map((value) => {
         const chip = createButton("chip", `${money.format(value)} ${T.tGram}`, { grams: value });
         chip.addEventListener("click", () => setGrams(String(value).replace(".", DECIMAL)));
@@ -298,7 +298,9 @@
   }
 
   function updateTotals() {
-    $("#total").value = formatMoney(itemCost(state.item));
+    const total = $("#total");
+    total.classList.remove("skeleton"); // до первого расчёта на месте суммы заглушка
+    total.value = formatMoney(itemCost(state.item));
     saveItem();
   }
 
@@ -325,9 +327,11 @@
           })
         : "";
 
+      status.className = "muted"; // до этого текст «Загружаем курс…» слышали только скринридеры
       status.hidden = state.rates.length > 0;
       status.textContent = T.tNoRates;
     } catch {
+      status.className = "muted";
       status.hidden = false;
       status.textContent = T.tLoadError;
     }
