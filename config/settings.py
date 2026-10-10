@@ -168,6 +168,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'core.context_processors.site',
+                'django.template.context_processors.i18n',
             ],
         },
     },
@@ -219,6 +220,8 @@ LANGUAGES = [
     ("ky", "Кыргызча"),
     ("en", "English"),
 ]
+
+LOCALE_PATHS = [BASE_DIR / "locale"]
 
 USE_TZ = True
 

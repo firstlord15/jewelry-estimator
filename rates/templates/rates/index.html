@@ -1,61 +1,77 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static i18n %}
 
-{% block title %}Калькулятор ювелирных изделий{% endblock %}
+{% block title %}{% trans "Калькулятор ювелирных изделий" %} — {{ SITE_NAME }}{% endblock %}
 
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'rates/calc.css' %}" />
 {% endblock %}
 
-{% block body_attrs %}data-show-qty="{{ show_qty|yesno:'1,0' }}"{% endblock %}
+{# Тексты для calc.js: скрипт не умеет {% trans %}, поэтому берёт переводы из data-атрибутов #}
+{% block body_attrs %}
+    data-show-qty="{{ show_qty|yesno:'1,0' }}"
+    data-t-no-rates="{% trans 'Курс пока не установлен. Загляните позже.' %}"
+    data-t-load-error="{% trans 'Не удалось загрузить курс. Проверьте интернет и обновите страницу.' %}"
+    data-t-updated="{% trans 'Обновлено' %}"
+    data-t-gram="{% trans 'г' %}"
+    data-t-currency="{% trans 'сом' %}"
+    data-locale="{{ LANGUAGE_CODE }}"
+{% endblock %}
 
 {% block content %}
-    <h1 class="hero">Ювелирный <span class="highlight-text">калькулятор</span></h1>
+    <h1 class="hero">{% blocktrans trimmed %}Ювелирный <span class="highlight-text">калькулятор</span>{% endblocktrans %}</h1>
 
     <div class="layout">
         <section class="panel glass calc" aria-labelledby="calc-title">
-            <h2 id="calc-title">Рассчитайте стоимость</h2>
+            <h2 id="calc-title">{% trans "Рассчитайте стоимость" %}</h2>
             <div id="item" class="item">
-                <div class="segmented" id="metals" role="group" aria-label="Металл"></div>
-                <div class="chips" id="probes" role="group" aria-label="Проба"></div>
+                <div class="segmented" id="metals" role="group" aria-label="{% trans 'Металл' %}"></div>
+                <div class="chips" id="probes" role="group" aria-label="{% trans 'Проба' %}"></div>
                 <div class="item-fields">
                     <label class="field field-weight">
-                        <span>Вес изделия, г</span>
+                        <span>{% trans "Вес изделия, г" %}</span>
                         <span class="input-wrap">
                             <input class="input-num" id="grams" type="text" inputmode="decimal" placeholder="3,5" autocomplete="off" />
-                            <button type="button" class="clear" id="clear-grams" aria-label="Очистить вес" hidden>×</button>
+                            <button type="button" class="clear" id="clear-grams" aria-label="{% trans 'Очистить вес' %}" hidden>×</button>
                         </span>
                     </label>
                     {% if show_qty %}
                     <label class="field field-qty">
-                        <span>Кол-во, шт</span>
+                        <span>{% trans "Кол-во, шт" %}</span>
                         <input class="input-num" id="qty" type="number" inputmode="numeric" min="1" step="1" />
                     </label>
                     {% endif %}
                 </div>
-                <div class="chips chips-quick" id="quick" role="group" aria-label="Быстрый вес"></div>
+                <div class="chips chips-quick" id="quick" role="group" aria-label="{% trans 'Быстрый вес' %}"></div>
             </div>
         </section>
 
         <section class="panel glass result" aria-labelledby="result-title">
             <div class="result-main">
-                <output id="total" class="result-total">0 сом</output>
-                <h2 id="result-title" class="result-caption">Примерная стоимость</h2>
+                <output id="total" class="result-total">0 {% trans "сом" %}</output>
+                <h2 id="result-title" class="result-caption">{% trans "Примерная стоимость" %}</h2>
             </div>
-            <p class="note">Стоимость = цена за грамм × вес{% if show_qty %} × количество{% endif %}. Расчёт ориентировочный, итоговую цену уточняйте у продавца.</p>
+            {# Две целые фразы, а не склейка из кусков: в другом языке порядок слов может быть иным #}
+            <p class="note">
+                {% if show_qty %}
+                {% trans "Стоимость = цена за грамм × вес × количество. Расчёт ориентировочный, итоговую цену уточняйте у продавца." %}
+                {% else %}
+                {% trans "Стоимость = цена за грамм × вес. Расчёт ориентировочный, итоговую цену уточняйте у продавца." %}
+                {% endif %}
+            </p>
         </section>
 
         <section class="panel glass rates" aria-labelledby="board-title">
             <div class="panel-head">
-                <h2 id="board-title">Курс</h2>
-                <div id="board-metals" class="segmented" role="group" aria-label="Металл"></div>
+                <h2 id="board-title">{% trans "Курс" %}</h2>
+                <div id="board-metals" class="segmented" role="group" aria-label="{% trans 'Металл' %}"></div>
             </div>
             <div class="rates-cols">
-                <span>Проба</span>
-                <span>Цена за грамм</span>
+                <span>{% trans "Проба" %}</span>
+                <span>{% trans "Цена за грамм" %}</span>
             </div>
             <div id="board" class="board"></div>
-            <p id="board-status" class="muted">Загружаем курс…</p>
+            <p id="board-status" class="muted">{% trans "Загружаем курс…" %}</p>
             <p id="updated" class="muted small"></p>
         </section>
     </div>

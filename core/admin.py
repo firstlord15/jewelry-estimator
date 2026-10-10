@@ -8,17 +8,21 @@ from .models import Phone, SiteSettings
 class PhoneInline(TabularInline):
     model = Phone
     extra = 0
-    can_delete = True
-    fields = ("label", "number", "order")
+    fields = ("label", "label_ky", "label_en", "number", "order")
     verbose_name_plural = "Телефоны (footer => первый в порядке)"
+
+
 @admin.register(SiteSettings)
 class SiteSettingsAdmin(ModelAdmin):
     inlines = [PhoneInline]
 
+    # Тексты по языкам лежат во вкладках; пустой перевод на сайте заменяется русским текстом
     fieldsets = (
-        (None, {"fields": ("name", "logo", "about")}),
-        ("Контакты", {"fields": ("email", "address", "working_hours")}),
+        (None, {"fields": ("name", "logo", "email")}),
         ("Мессенджеры и соцсети", {"fields": ("instagram", "whatsapp", "telegram")}),
+        ("Русский", {"classes": ["tab"], "fields": ("address", "working_hours", "about")}),
+        ("Кыргызча", {"classes": ["tab"], "fields": ("address_ky", "working_hours_ky", "about_ky")}),
+        ("English", {"classes": ["tab"], "fields": ("address_en", "working_hours_en", "about_en")}),
     )
 
     def has_add_permission(self, request):

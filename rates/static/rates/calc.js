@@ -1,9 +1,13 @@
 "use strict";
 
 (() => {
-  const API_URL = "/api/rates/";
+  // Переведённые тексты и язык страницы приходят из шаблона в data-атрибутах <body>
+  const T = document.body.dataset;
+  const LOCALE = T.locale || "ru";
+  // язык в адресе: API отдаёт названия металлов и валюту на языке страницы
+  const API_URL = `/api/rates/?lang=${encodeURIComponent(LOCALE)}`;
   const STORAGE_KEY = "jewelry-calc-item";
-  const SHOW_QTY = document.body.dataset.showQty === "1";
+  const SHOW_QTY = T.showQty === "1";
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
   let rendered = false;
@@ -11,14 +15,16 @@
   const state = {
     rates: [],
     quickWeights: [], // быстрые веса из админки, числами
-    currency: "сом",
+    currency: T.tCurrency,
     item: { probeId: null, grams: "", qty: "1" },
     boardMetal: null, // металл, показанный в таблице курса
   };
 
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
-  const money = new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 2 });
+  const money = new Intl.NumberFormat(LOCALE, { maximumFractionDigits: 2 });
+  // десятичный разделитель языка страницы: «3,5» в русском, «3.5» в английском
+  const DECIMAL = money.formatToParts(1.5).find((part) => part.type === "decimal")?.value ?? ",";
   const formatMoney = (value) => `${money.format(value)} ${state.currency}`;
   const findRate = (id) => state.rates.find((rate) => rate.id === id);
   const pricePerGram = (rate) => Number(rate.price_per_gram);
@@ -255,8 +261,8 @@
     quick.hidden = state.quickWeights.length === 0;
     quick.append(
       ...state.quickWeights.map((value) => {
-        const chip = createButton("chip", `${money.format(value)} г`, { grams: value });
-        chip.addEventListener("click", () => setGrams(String(value).replace(".", ",")));
+        const chip = createButton("chip", `${money.format(value)} ${T.tGram}`, { grams: value });
+        chip.addEventListener("click", () => setGrams(String(value).replace(".", DECIMAL)));
         return chip;
       }),
     );
@@ -307,11 +313,11 @@
       const data = await response.json();
 
       state.rates = data.rates;
-      state.currency = data.currency_label || "сом";
+      state.currency = data.currency_label || T.tCurrency;
       state.quickWeights = (data.quick_weights ?? []).map(Number);
       $("#updated").textContent = data.updated_at
-        ? "Обновлено " +
-          new Date(data.updated_at).toLocaleString("ru-RU", {
+        ? `${T.tUpdated} ` +
+          new Date(data.updated_at).toLocaleString(LOCALE, {
             day: "numeric",
             month: "long",
             hour: "2-digit",
@@ -320,10 +326,10 @@
         : "";
 
       status.hidden = state.rates.length > 0;
-      status.textContent = "Курс пока не установлен. Загляните позже.";
+      status.textContent = T.tNoRates;
     } catch {
       status.hidden = false;
-      status.textContent = "Не удалось загрузить курс. Проверьте интернет и обновите страницу.";
+      status.textContent = T.tLoadError;
     }
 
     initBoardMetals();

@@ -1,0 +1,244 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-10 15:22+0600\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+#: config/settings.py:30
+msgid "Управление"
+msgstr ""
+
+#: config/settings.py:70
+msgid "Курс и калькулятор"
+msgstr ""
+
+#: config/settings.py:74
+msgid "Пробы"
+msgstr ""
+
+#: config/settings.py:80
+msgid "Быстрые веса"
+msgstr ""
+
+#: config/settings.py:86
+msgid "История изменений"
+msgstr ""
+
+#: config/settings.py:94
+msgid "Сайт"
+msgstr ""
+
+#: config/settings.py:98
+msgid "Настройки сайта"
+msgstr ""
+
+#: config/settings.py:106 config/settings.py:115
+msgid "Пользователи"
+msgstr ""
+
+#: config/settings.py:110 templates/partials/account_links.html:5
+msgid "Мой профиль"
+msgstr "My profile"
+
+#: config/settings.py:121
+msgid "Группы и права"
+msgstr ""
+
+#: core/templates/core/about.html:4 core/templates/core/about.html:7
+#: templates/partials/footer.html:30
+msgid "О нас"
+msgstr "About us"
+
+#: core/templates/core/cart.html:4 core/templates/core/cart.html:7
+#: templates/partials/footer.html:25 templates/partials/header.html:36
+msgid "Корзина"
+msgstr "Cart"
+
+#: core/templates/core/cart.html:8 core/templates/core/catalog.html:8
+#: core/templates/core/favorites.html:8 core/templates/core/home.html:6
+msgid "Раздел скоро появится."
+msgstr "This section is coming soon."
+
+#: core/templates/core/catalog.html:4 core/templates/core/catalog.html:7
+#: templates/partials/footer.html:22 templates/partials/header.html:20
+msgid "Каталог"
+msgstr "Catalog"
+
+#: core/templates/core/contacts.html:4 core/templates/core/contacts.html:7
+#: templates/partials/footer.html:31 templates/partials/footer.html:36
+msgid "Контакты"
+msgstr "Contacts"
+
+#: core/templates/core/favorites.html:4 core/templates/core/favorites.html:7
+#: templates/partials/footer.html:24 templates/partials/header.html:30
+msgid "Избранное"
+msgstr "Favorites"
+
+#: rates/models.py:11
+msgid "Золото"
+msgstr "Gold"
+
+#: rates/models.py:12
+msgid "Серебро"
+msgstr "Silver"
+
+#: rates/templates/rates/index.html:4
+msgid "Калькулятор ювелирных изделий"
+msgstr "Jewelry calculator"
+
+#: rates/templates/rates/index.html:13
+msgid "Курс пока не установлен. Загляните позже."
+msgstr "Rates are not set yet. Please check back later."
+
+#: rates/templates/rates/index.html:14
+msgid "Не удалось загрузить курс. Проверьте интернет и обновите страницу."
+msgstr "Could not load the rates. Check your connection and refresh the page."
+
+#: rates/templates/rates/index.html:15
+msgid "Обновлено"
+msgstr "Updated"
+
+#: rates/templates/rates/index.html:16
+msgid "г"
+msgstr "g"
+
+#: rates/templates/rates/index.html:17 rates/templates/rates/index.html:51
+#: rates/views.py:32
+msgid "сом"
+msgstr "som"
+
+#: rates/templates/rates/index.html:22
+msgid "Ювелирный <span class=\"highlight-text\">калькулятор</span>"
+msgstr "Jewelry <span class=\"highlight-text\">calculator</span>"
+
+#: rates/templates/rates/index.html:26
+msgid "Рассчитайте стоимость"
+msgstr "Calculate the price"
+
+#: rates/templates/rates/index.html:28 rates/templates/rates/index.html:67
+msgid "Металл"
+msgstr "Metal"
+
+#: rates/templates/rates/index.html:29 rates/templates/rates/index.html:70
+msgid "Проба"
+msgstr "Fineness"
+
+#: rates/templates/rates/index.html:32
+msgid "Вес изделия, г"
+msgstr "Item weight, g"
+
+#: rates/templates/rates/index.html:35
+msgid "Очистить вес"
+msgstr "Clear weight"
+
+#: rates/templates/rates/index.html:40
+msgid "Кол-во, шт"
+msgstr "Qty, pcs"
+
+#: rates/templates/rates/index.html:45
+msgid "Быстрый вес"
+msgstr "Quick weight"
+
+#: rates/templates/rates/index.html:52
+msgid "Примерная стоимость"
+msgstr "Estimated price"
+
+#: rates/templates/rates/index.html:57
+msgid ""
+"Стоимость = цена за грамм × вес × количество. Расчёт ориентировочный, "
+"итоговую цену уточняйте у продавца."
+msgstr "Price = price per gram × weight × quantity. This is an estimate; please confirm the final price with the seller."
+
+#: rates/templates/rates/index.html:59
+msgid ""
+"Стоимость = цена за грамм × вес. Расчёт ориентировочный, итоговую цену "
+"уточняйте у продавца."
+msgstr "Price = price per gram × weight. This is an estimate; please confirm the final price with the seller."
+
+#: rates/templates/rates/index.html:66
+msgid "Курс"
+msgstr "Rates"
+
+#: rates/templates/rates/index.html:71
+msgid "Цена за грамм"
+msgstr "Price per gram"
+
+#: rates/templates/rates/index.html:74
+msgid "Загружаем курс…"
+msgstr "Loading rates…"
+
+#: templates/base.html:16
+msgid "Перейти к содержимому"
+msgstr "Skip to content"
+
+#: templates/partials/account_links.html:6
+msgid "Мои заказы"
+msgstr "My orders"
+
+#: templates/partials/account_links.html:7
+msgid "Выйти"
+msgstr "Log out"
+
+#: templates/partials/account_links.html:9 templates/partials/header.html:70
+msgid "Войти"
+msgstr "Log in"
+
+#: templates/partials/account_links.html:10
+msgid "Регистрация"
+msgstr "Sign up"
+
+#: templates/partials/footer.html:21
+msgid "Разделы"
+msgstr "Sections"
+
+#: templates/partials/footer.html:23 templates/partials/header.html:42
+msgid "Калькулятор"
+msgstr "Calculator"
+
+#: templates/partials/footer.html:29
+msgid "Покупателям"
+msgstr "For customers"
+
+#: templates/partials/footer.html:49
+msgid "Мы в соцсетях"
+msgstr "Follow us"
+
+#: templates/partials/header.html:25 templates/partials/header.html:82
+msgid "Поиск"
+msgstr "Search"
+
+#: templates/partials/header.html:52
+msgid "Меню"
+msgstr "Menu"
+
+#: templates/partials/header.html:60
+msgid "Язык"
+msgstr "Language"
+
+#: templates/partials/header.html:86
+msgid "Название или артикул"
+msgstr "Name or item number"
+
+#: templates/partials/header.html:86
+msgid "Поиск по каталогу"
+msgstr "Search the catalog"
+
+#: templates/partials/header.html:87
+msgid "Закрыть"
+msgstr "Close"
+
+#: templates/partials/header.html:90
+msgid "Начните вводить название или артикул изделия."
+msgstr "Start typing a name or item number."

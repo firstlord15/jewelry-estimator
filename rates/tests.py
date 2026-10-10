@@ -32,6 +32,16 @@ class RatesApiTests(TestCase):
         response = self.client.post(self.url)
         self.assertEqual(response.status_code, 405)
 
+    def test_labels_follow_lang_parameter(self):
+        data = self.client.get(self.url, {"lang": "en"}).json()
+        self.assertEqual(data["rates"][0]["metal_label"], "Gold")
+        self.assertEqual(data["currency_label"], "som")
+
+    def test_unknown_lang_is_ignored(self):
+        response = self.client.get(self.url, {"lang": "xx"})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["rates"][0]["metal_label"], "Золото")
+
     def test_empty_when_no_probes(self):
         Probe.objects.all().delete()
         data = self.client.get(self.url).json()

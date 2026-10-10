@@ -210,14 +210,14 @@
   display: none;
 }
 
-/* Пункты меню: ссылки профиля и кнопки языков выглядят одинаково */
+/* Пункты меню: ссылки профиля и языков выглядят одинаково */
 .account-links,
 .lang-form {
   display: flex;
   flex-direction: column;
 }
 
-:is(.account-links a, .lang-form button) {
+:is(.account-links a, .lang-form a) {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -232,7 +232,7 @@
   cursor: pointer;
 }
 
-.lang-form button[aria-current="true"] {
+.lang-form a[aria-current="true"] {
   color: var(--gold-bright);
   font-weight: 600;
 }
@@ -335,7 +335,7 @@
     border-color: var(--glass-hover-border);
   }
 
-  :is(.account-links a, .lang-form button):hover,
+  :is(.account-links a, .lang-form a):hover,
   .search-close:hover {
     background: var(--glass-hover);
   }
@@ -443,7 +443,7 @@
     padding-top: 8px;
   }
 
-  .panel-extra .lang-form button {
+  .panel-extra .lang-form a {
     background: var(--soft);
     border: 1px solid var(--glass-border);
     border-radius: 999px;
