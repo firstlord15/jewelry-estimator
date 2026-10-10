@@ -1,6 +1,7 @@
 {% load i18n %}
 {% get_current_language as CURRENT_LANG %}
-{% url 'calculator' as calculator_url %}
+{# Имя маршрута текущей страницы: по нему ставится точка у пункта меню #}
+{% with current=request.resolver_match.url_name %}
 <header class="site-header">
     <div class="container site-header__inner">
         <a class="logo" href="{% url 'home' %}" aria-label="{{ SITE_NAME }}">
@@ -13,7 +14,7 @@
             На телефоне этот блок становится панелью бургера, и подписи рядом с иконками видны.
         {% endcomment %}
         <div class="header-icons" id="menu">
-            <a class="action" href="{% url 'catalog' %}">
+            <a class="action" href="{% url 'catalog' %}"{% if current == 'catalog' %} aria-current="page"{% endif %}>
                 {% include "icons/menu.svg" %}
                 <span class="action-label">{% trans "Каталог" %}</span>
             </a>
@@ -23,19 +24,19 @@
                 <span class="action-label">{% trans "Поиск" %}</span>
             </button>
 
-            <a class="action" href="{% url 'favorites' %}">
+            <a class="action" href="{% url 'favorites' %}"{% if current == 'favorites' %} aria-current="page"{% endif %}>
                 {% include "icons/heart.svg" %}
                 <span class="action-label">{% trans "Избранное" %}</span>
                 <span class="badge" data-badge="favorites" data-count="0">0</span>
             </a>
 
-            <a class="action" href="{% url 'cart' %}">
+            <a class="action" href="{% url 'cart' %}"{% if current == 'cart' %} aria-current="page"{% endif %}>
                 {% include "icons/cart.svg" %}
                 <span class="action-label">{% trans "Корзина" %}</span>
                 <span class="badge" data-badge="cart" data-count="0">0</span>
             </a>
 
-            <a class="action" href="{{ calculator_url }}"{% if request.path == calculator_url %} aria-current="page"{% endif %}>
+            <a class="action" href="{% url 'calculator' %}"{% if current == 'calculator' %} aria-current="page"{% endif %}>
                 {% include "icons/calculator.svg" %}
                 <span class="action-label">{% trans "Калькулятор" %}</span>
             </a>
@@ -74,6 +75,7 @@
     </div>
 
 </header>
+{% endwith %}
 
 {# Окно поиска поверх страницы. Результаты подставятся, когда появится каталог #}
 <dialog class="search-dialog" id="search-dialog" aria-label="{% trans 'Поиск' %}">

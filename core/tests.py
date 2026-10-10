@@ -35,6 +35,14 @@ class PagesTests(TestCase):
             with self.subTest(name):
                 self.assertEqual(self.client.get(reverse(name)).status_code, 200)
 
+    def test_header_marks_current_page(self):
+        for name in ["catalog", "favorites", "cart", "calculator"]:
+            with self.subTest(name):
+                response = self.client.get(reverse(name))
+                self.assertContains(response, f'href="{reverse(name)}" aria-current="page"', count=1)
+        # страницы не из шапки: точки нет
+        self.assertNotContains(self.client.get(reverse("about")), 'aria-current="page"')
+
     def test_contacts_shows_all_phones(self):
         site = SiteSettings.load()
         site.phones.create(label="Главный", number="+996 555 123 456", order=1)
