@@ -1,18 +1,28 @@
 {% load i18n %}
-{% url 'rates:index' as home_url %}
 <footer class="site-footer">
     <div class="container site-footer__inner">
-        <p class="site-footer__copy">© {% now "Y" %} {{ SITE_NAME }}</p>
+        {# Слева контакты из «Настроек сайта» (пустые поля не выводятся) и копирайт под ними #}
+        <div class="site-footer__info">
+            <address class="site-footer__contacts">
+                {% for phone in site_settings.phones_list %}
+                <a href="tel:{{ phone|cut:' '|cut:'-'|cut:'('|cut:')' }}">{{ phone }}</a>
+                {% endfor %}
+                {% if site_settings.email %}<a href="mailto:{{ site_settings.email }}">{{ site_settings.email }}</a>{% endif %}
+                {% if site_settings.address %}<span>{{ site_settings.address }}</span>{% endif %}
+                {% if site_settings.working_hours %}<span class="muted">{{ site_settings.working_hours }}</span>{% endif %}
+            </address>
+            <p class="site-footer__copy">© {% now "Y" %} {{ SITE_NAME }}</p>
+        </div>
 
         <nav class="site-footer__links" aria-label="{% trans 'Информация' %}">
             <a href="#">{% trans "О нас" %}</a>
         </nav>
 
-        {# Соцсети: ссылки пока ведут на главную, потом заменим на реальные адреса #}
+        {# Соцсети: иконка только у заполненных ссылок #}
         <div class="site-footer__social">
-            <a class="social" href="{{ home_url }}" aria-label="Instagram">{% include "icons/instagram.svg" %}</a>
-            <a class="social" href="{{ home_url }}" aria-label="WhatsApp">{% include "icons/whatsapp.svg" %}</a>
-            <a class="social" href="{{ home_url }}" aria-label="Telegram">{% include "icons/telegram.svg" %}</a>
+            {% if site_settings.instagram %}<a class="social" href="{{ site_settings.instagram }}" target="_blank" rel="noopener" aria-label="Instagram">{% include "icons/instagram.svg" %}</a>{% endif %}
+            {% if site_settings.whatsapp %}<a class="social" href="{{ site_settings.whatsapp }}" target="_blank" rel="noopener" aria-label="WhatsApp">{% include "icons/whatsapp.svg" %}</a>{% endif %}
+            {% if site_settings.telegram %}<a class="social" href="{{ site_settings.telegram }}" target="_blank" rel="noopener" aria-label="Telegram">{% include "icons/telegram.svg" %}</a>{% endif %}
         </div>
     </div>
 </footer>

@@ -90,7 +90,7 @@ class ProfileAdmin(ModelAdmin):
         return False
 
 
-# Стандартные User/Group заменяем версиями под Unfold: иначе нет кнопок «Добавить» и т.п.
+# Стандартные User/Group заменяем версиями под Unfold
 admin.site.unregister(User)
 admin.site.unregister(Group)
 

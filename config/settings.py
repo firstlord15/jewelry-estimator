@@ -91,6 +91,18 @@ UNFOLD = {
                 ],
             },
             {
+                "title": _("Сайт"),
+                "separator": True,
+                "items": [
+                    {
+                        "title": _("Настройки сайта"),
+                        "icon": "settings",
+                        "link": reverse_lazy("admin:core_sitesettings_changelist"),
+                        "permission": lambda request: request.user.has_perm("core.view_sitesettings"),
+                    },
+                ],
+            },
+            {
                 "title": _("Пользователи"),
                 "separator": True,
                 "items": [
@@ -126,7 +138,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    "rates"
+    'core',
+    'rates',
 ]
 
 MIDDLEWARE = [
@@ -153,7 +166,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'config.context_processors.site',
+                'core.context_processors.site',
             ],
         },
     },
