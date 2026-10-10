@@ -13,7 +13,8 @@
         </div>
 
         <nav class="site-footer__links" aria-label="{% trans 'Информация' %}">
-            <a href="#">{% trans "О нас" %}</a>
+            <a href="{% url 'about' %}">{% trans "О нас" %}</a>
+            <a href="{% url 'contacts' %}">{% trans "Контакты" %}</a>
         </nav>
 
         {# Соцсети: иконка только у заполненных ссылок #}

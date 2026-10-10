@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "О нас" %} — {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+    <h1 class="hero">{% trans "О нас" %}</h1>
+    <section class="panel glass">{{ site_settings.about|linebreaks }}</section>
+{% endblock %}

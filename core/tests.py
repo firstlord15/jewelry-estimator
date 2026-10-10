@@ -22,11 +22,32 @@ class FooterTests(TestCase):
         site.telegram = "https://t.me/example"
         site.save()
 
-        response = self.client.get(reverse("rates:index"))
+        response = self.client.get(reverse("calculator"))
         self.assertContains(response, "Тестовый магазин")
         self.assertContains(response, 'href="tel:+996555123456"')
         self.assertContains(response, 'href="https://t.me/example"')
         self.assertNotContains(response, 'aria-label="Instagram"')  # пустая ссылка не выводится
+
+
+class PagesTests(TestCase):
+    def test_pages_open(self):
+        for name in ["home", "catalog", "cart", "favorites", "about", "contacts", "calculator"]:
+            with self.subTest(name):
+                self.assertEqual(self.client.get(reverse(name)).status_code, 200)
+
+    def test_contacts_shows_all_phones(self):
+        site = SiteSettings.load()
+        site.phones.create(label="Главный", number="+996 555 123 456", order=1)
+        site.phones.create(label="Второй", number="+996 700 000 000", order=2)
+
+        response = self.client.get(reverse("contacts"))
+        self.assertContains(response, "+996 555 123 456")
+        self.assertContains(response, "+996 700 000 000")
+        self.assertContains(response, "Второй")
+
+    def test_language_switch_available(self):
+        response = self.client.post(reverse("set_language"), {"language": "en", "next": "/"})
+        self.assertRedirects(response, "/")
 
 
 class SiteSettingsAdminTests(TestCase):

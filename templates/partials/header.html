@@ -1,9 +1,9 @@
 {% load i18n %}
 {% get_current_language as CURRENT_LANG %}
-{% url 'rates:index' as calculator_url %}
+{% url 'calculator' as calculator_url %}
 <header class="site-header">
     <div class="container site-header__inner">
-        <a class="logo" href="{{ calculator_url }}" aria-label="{{ SITE_NAME }}">
+        <a class="logo" href="{% url 'home' %}" aria-label="{{ SITE_NAME }}">
             {% include "icons/logo.svg" %}
             <span>{{ SITE_NAME }}</span>
         </a>
@@ -13,7 +13,7 @@
             На телефоне этот блок становится панелью бургера, и подписи рядом с иконками видны.
         {% endcomment %}
         <div class="header-icons" id="menu">
-            <a class="action" href="#">
+            <a class="action" href="{% url 'catalog' %}">
                 {% include "icons/menu.svg" %}
                 <span class="action-label">{% trans "Каталог" %}</span>
             </a>
@@ -23,13 +23,13 @@
                 <span class="action-label">{% trans "Поиск" %}</span>
             </button>
 
-            <a class="action" href="#">
+            <a class="action" href="{% url 'favorites' %}">
                 {% include "icons/heart.svg" %}
                 <span class="action-label">{% trans "Избранное" %}</span>
                 <span class="badge" data-badge="favorites" data-count="0">0</span>
             </a>
 
-            <a class="action" href="#">
+            <a class="action" href="{% url 'cart' %}">
                 {% include "icons/cart.svg" %}
                 <span class="action-label">{% trans "Корзина" %}</span>
                 <span class="badge" data-badge="cart" data-count="0">0</span>

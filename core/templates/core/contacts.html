@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Контакты" %} — {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+    <h1 class="hero">{% trans "Контакты" %}</h1>
+    <section class="panel glass">
+        {% for phone in phones %}
+        <p>{% if phone.label %}<span class="muted">{{ phone.label }}:</span> {% endif %}<a href="tel:{{ phone.tel }}">{{ phone.number }}</a></p>
+        {% endfor %}
+        {% if site_settings.email %}<p><a href="mailto:{{ site_settings.email }}">{{ site_settings.email }}</a></p>{% endif %}
+        {% if site_settings.address %}<p>{{ site_settings.address }}</p>{% endif %}
+        {% if site_settings.working_hours %}<p class="muted">{{ site_settings.working_hours }}</p>{% endif %}
+    </section>
+{% endblock %}

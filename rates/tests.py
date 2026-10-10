@@ -15,7 +15,7 @@ class RatesApiTests(TestCase):
         Probe.objects.create(
             metal="silver", fineness=925, price_per_gram=Decimal("155"), is_active=False
         )
-        self.url = reverse("rates:api")
+        self.url = reverse("rates_api")
 
     def test_returns_only_active(self):
         response = self.client.get(self.url)
@@ -40,19 +40,19 @@ class RatesApiTests(TestCase):
 
 class IndexPageTests(TestCase):
     def test_index_opens(self):
-        response = self.client.get(reverse("rates:index"))
+        response = self.client.get(reverse("calculator"))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Рассчитайте стоимость")
 
     @override_settings(CALC_SHOW_QUANTITY=False)
     def test_quantity_hidden(self):
-        response = self.client.get(reverse("rates:index"))
+        response = self.client.get(reverse("calculator"))
         self.assertNotContains(response, 'id="qty"')
         self.assertContains(response, 'data-show-qty="0"')
 
     @override_settings(CALC_SHOW_QUANTITY=True)
     def test_quantity_shown(self):
-        response = self.client.get(reverse("rates:index"))
+        response = self.client.get(reverse("calculator"))
         self.assertContains(response, 'id="qty"')
         self.assertContains(response, 'data-show-qty="1"')
 
@@ -61,7 +61,7 @@ class QuickWeightsTests(TestCase):
     def setUp(self):
         # миграция заложила стандартный набор; для проверок начинаем с чистого листа
         QuickWeight.objects.all().delete()
-        self.url = reverse("rates:api")
+        self.url = reverse("rates_api")
 
     def test_active_sorted_and_trimmed(self):
         QuickWeight.objects.create(grams=Decimal("10"))
