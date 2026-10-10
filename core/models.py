@@ -1,3 +1,5 @@
+import re
+
 from django.db import models
 
 
@@ -6,7 +8,6 @@ class SiteSettings(models.Model):
 
     name = models.CharField("Название", max_length=255, default="Gold Store")
     logo = models.ImageField("Логотип", upload_to="site_settings/", blank=True)
-    phones = models.TextField("Телефоны", blank=True, help_text="По одному в строке")
     email = models.EmailField("Почта", blank=True)
     address = models.CharField("Адрес", max_length=255, blank=True)
     working_hours = models.CharField("Часы работы", max_length=255, blank=True)
@@ -30,6 +31,22 @@ class SiteSettings(models.Model):
         obj, _ = cls.objects.get_or_create(pk=1)
         return obj
 
+class Phone(models.Model):
+    """Телефонный номер для контактов сайта."""
+    site = models.ForeignKey(SiteSettings, on_delete=models.CASCADE, related_name="phones")
+    label = models.CharField("Название", max_length=255, blank=True, help_text="Например, «Контакт-центр»")
+    number = models.CharField("Номер", max_length=30)
+    order = models.PositiveIntegerField("Порядок", default=0)
+
+    class Meta:
+        ordering = ["order", "id"]
+        verbose_name = "Телефон"
+        verbose_name_plural = "Телефоны"
+
+    def __str__(self):
+        return self.number
+
     @property
-    def phones_list(self):
-        return [phone.strip() for phone in self.phones.splitlines() if phone.strip()]
+    def tel(self):
+        """Номер в формате для ссылки tel: (только цифры и +)"""
+        return re.sub(r"[^\d+]", "", self.number)

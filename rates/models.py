@@ -1,7 +1,3 @@
-from django.db import models
-
-# Create your models here.
-
 from decimal import Decimal
 
 from django.conf import settings
@@ -117,7 +113,6 @@ class PriceChange(models.Model):
 
     def __str__(self):
         return f"{self.probe_label}: {self.get_action_display()}"
-
 
 
 class Profile(User):

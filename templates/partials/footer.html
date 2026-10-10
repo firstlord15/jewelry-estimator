@@ -4,9 +4,7 @@
         {# Слева контакты из «Настроек сайта» (пустые поля не выводятся) и копирайт под ними #}
         <div class="site-footer__info">
             <address class="site-footer__contacts">
-                {% for phone in site_settings.phones_list %}
-                <a href="tel:{{ phone|cut:' '|cut:'-'|cut:'('|cut:')' }}">{{ phone }}</a>
-                {% endfor %}
+                {% if main_phone %}<a href="tel:{{ main_phone.tel }}">{{ main_phone.number }}</a>{% endif %}
                 {% if site_settings.email %}<a href="mailto:{{ site_settings.email }}">{{ site_settings.email }}</a>{% endif %}
                 {% if site_settings.address %}<span>{{ site_settings.address }}</span>{% endif %}
                 {% if site_settings.working_hours %}<span class="muted">{{ site_settings.working_hours }}</span>{% endif %}

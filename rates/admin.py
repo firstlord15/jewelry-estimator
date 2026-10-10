@@ -11,6 +11,7 @@ from .services import delete_probe, save_probe
 from django.urls import reverse
 from django.utils.html import format_html
 
+
 @admin.register(Probe)
 class ProbeAdmin(ModelAdmin):
     list_display = ("__str__", "price_per_gram", "is_active", "updated_at")
@@ -54,6 +55,7 @@ class PriceChangeAdmin(ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
 
 @admin.register(Profile)
 class ProfileAdmin(ModelAdmin):

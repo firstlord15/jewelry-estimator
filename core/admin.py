@@ -1,15 +1,23 @@
 from django.contrib import admin
 from django.shortcuts import redirect
-from unfold.admin import ModelAdmin
+from unfold.admin import ModelAdmin, TabularInline
 
-from .models import SiteSettings
+from .models import Phone, SiteSettings
 
 
+class PhoneInline(TabularInline):
+    model = Phone
+    extra = 0
+    can_delete = True
+    fields = ("label", "number", "order")
+    verbose_name_plural = "Телефоны (footer => первый в порядке)"
 @admin.register(SiteSettings)
 class SiteSettingsAdmin(ModelAdmin):
+    inlines = [PhoneInline]
+
     fieldsets = (
         (None, {"fields": ("name", "logo", "about")}),
-        ("Контакты", {"fields": ("phones", "email", "address", "working_hours")}),
+        ("Контакты", {"fields": ("email", "address", "working_hours")}),
         ("Мессенджеры и соцсети", {"fields": ("instagram", "whatsapp", "telegram")}),
     )
 

@@ -12,16 +12,13 @@ class SiteSettingsTests(TestCase):
         self.assertEqual(SiteSettings.objects.count(), 1)
         self.assertEqual(SiteSettings.load().pk, first.pk)
 
-    def test_phones_list_skips_empty_lines(self):
-        site = SiteSettings(phones="+996 555 123 456\n\n  +996 700 000 000  \n")
-        self.assertEqual(site.phones_list, ["+996 555 123 456", "+996 700 000 000"])
-
 
 class FooterTests(TestCase):
     def test_name_and_contacts_from_settings(self):
         site = SiteSettings.load()
         site.name = "Тестовый магазин"
-        site.phones = "+996 555 123 456"
+        site.phones.create(label="Главный", number="+996 555 123 456", order=1)
+        site.phones.create(label="Второй", number="+996 700 000 000", order=2)
         site.telegram = "https://t.me/example"
         site.save()
 
@@ -45,6 +42,7 @@ class SiteSettingsAdminTests(TestCase):
     def test_cannot_add(self):
         response = self.client.get(reverse("admin:core_sitesettings_add"))
         self.assertEqual(response.status_code, 403)
+
 
 class AdminLanguageMiddlewareTests(TestCase):
     def test_admin_is_russian_even_with_kyrgyz_cookie(self):
