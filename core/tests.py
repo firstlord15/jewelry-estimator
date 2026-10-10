@@ -2,6 +2,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from .models import SiteSettings
+from django.conf import settings
 
 
 class SiteSettingsTests(TestCase):
@@ -44,3 +45,12 @@ class SiteSettingsAdminTests(TestCase):
     def test_cannot_add(self):
         response = self.client.get(reverse("admin:core_sitesettings_add"))
         self.assertEqual(response.status_code, 403)
+
+class AdminLanguageMiddlewareTests(TestCase):
+    def test_admin_is_russian_even_with_kyrgyz_cookie(self):
+        from django.contrib.auth.models import User
+
+        self.client.force_login(User.objects.create_superuser("admin", "admin@example.com", "pass"))
+        self.client.cookies[settings.LANGUAGE_COOKIE_NAME] = "ky"
+        response = self.client.get(reverse("admin:index"))
+        self.assertContains(response, 'lang="ru"')
