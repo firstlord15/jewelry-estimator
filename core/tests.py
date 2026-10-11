@@ -293,3 +293,48 @@ class ChangeLogAdminTests(TestCase):
         self.assertEqual(self.client.post(reverse("admin:core_changelog_change", args=[log.pk]), {"object_label": "x"}).status_code, 403)
         self.assertEqual(self.client.post(reverse("admin:core_changelog_delete", args=[log.pk]), {"post": "yes"}).status_code, 403)
         self.assertTrue(ChangeLog.objects.filter(pk=log.pk, object_label="Проба").exists())
+
+
+class ModeratorRoleTests(TestCase):
+    """Команда setup_roles: что модератору можно в админке и что нельзя."""
+
+    def setUp(self):
+        from django.contrib.auth.models import Group
+        from django.core.management import call_command
+
+        call_command("setup_roles", verbosity=0)
+        self.group = Group.objects.get(name="Модераторы")
+        self.moder = User.objects.create_user("moder", password="pass", is_staff=True)
+        self.moder.groups.add(self.group)
+        self.client.force_login(self.moder)
+
+    def test_group_permissions(self):
+        perms = {f"{p.content_type.app_label}.{p.codename}" for p in self.group.permissions.select_related("content_type")}
+        self.assertLessEqual({"rates.change_probe", "core.change_sitesettings", "core.add_phone", "core.view_changelog"}, perms)
+        self.assertFalse(perms & {"core.change_changelog", "core.delete_changelog", "core.delete_sitesettings", "auth.view_user", "auth.change_group"})
+
+    def test_command_can_run_twice_and_drops_extra_permissions(self):
+        from django.contrib.auth.models import Permission
+        from django.core.management import call_command
+
+        self.group.permissions.add(Permission.objects.get(codename="delete_user"))
+        call_command("setup_roles", verbosity=0)
+        self.assertFalse(self.group.permissions.filter(codename="delete_user").exists())
+
+    def test_moderator_pages(self):
+        allowed = ["admin:rates_probe_changelist", "admin:rates_quickweight_changelist", "admin:core_changelog_changelist"]
+        for name in allowed:
+            with self.subTest(name):
+                self.assertEqual(self.client.get(reverse(name)).status_code, 200)
+        self.assertEqual(self.client.get(reverse("admin:core_sitesettings_change", args=[1])).status_code, 200)
+
+        for name in ["admin:auth_user_changelist", "admin:auth_group_changelist"]:
+            with self.subTest(name):
+                self.assertEqual(self.client.get(reverse(name)).status_code, 403)
+
+    def test_moderator_change_is_logged_under_their_name(self):
+        from rates.models import Probe
+
+        probe = Probe.objects.create(metal="gold", fineness=585, price_per_gram="4800")
+        self.client.post(reverse("admin:rates_probe_change", args=[probe.pk]), {"metal": "gold", "fineness": 585, "price_per_gram": "4900", "is_active": "on"})
+        self.assertEqual(ChangeLog.objects.get().changed_by, self.moder)

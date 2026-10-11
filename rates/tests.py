@@ -3,7 +3,7 @@ from decimal import Decimal
 from django.test import TestCase
 from django.urls import reverse
 
-from django.contrib.auth.models import User
+from django.contrib.auth.models import Group, Permission, User
 from django.test import override_settings
 
 from core.models import ChangeLog
@@ -99,6 +99,21 @@ class RatesChangeLogTests(TestCase):
         self.admin = User.objects.create_superuser("admin", "admin@example.com", "pass")
         self.client.force_login(self.admin)
 
+    def save_user(self, user, **changes):
+        """Сохраняет форму пользователя в админке с текущими значениями и правками из changes."""
+        url = reverse("admin:auth_user_change", args=[user.pk])
+        form = self.client.get(url).context["adminform"].form
+        data = {name: value for name, value in form.initial.items() if value not in (None, [], False)}
+        data |= {"date_joined_0": user.date_joined.date().isoformat(), "date_joined_1": user.date_joined.strftime("%H:%M:%S")}
+        data.pop("date_joined", None), data.pop("password", None), data.pop("last_login", None)
+        data["groups"] = [group.pk for group in data.get("groups", [])]
+        data["user_permissions"] = [perm.pk for perm in data.get("user_permissions", [])]
+        response = self.client.post(url, data | changes)
+        self.assertEqual(response.status_code, 302, "форма пользователя не сохранилась")
+
+    def updates(self):
+        return [(log.object_label, log.field, log.old_value, log.new_value) for log in ChangeLog.objects.filter(action=ChangeLog.Action.UPDATE)]
+
     def test_probe_created_in_admin(self):
         self.client.post(reverse("admin:rates_probe_add"), {"metal": "gold", "fineness": 585, "price_per_gram": "4800.50", "is_active": "on"})
         log = ChangeLog.objects.get()
@@ -139,12 +154,59 @@ class RatesChangeLogTests(TestCase):
         created = ChangeLog.objects.get()
         self.assertEqual((created.action, created.object_label), (ChangeLog.Action.CREATE, "moder"))
 
-        form = self.client.get(reverse("admin:auth_user_change", args=[user.pk])).context["adminform"].form
-        data = {name: value for name, value in form.initial.items() if value not in (None, [], False)}
-        data |= {"date_joined_0": user.date_joined.date().isoformat(), "date_joined_1": user.date_joined.strftime("%H:%M:%S"), "is_staff": "on"}
-        data.pop("date_joined", None), data.pop("password", None), data.pop("last_login", None)
-        response = self.client.post(reverse("admin:auth_user_change", args=[user.pk]), data)
-        self.assertEqual(response.status_code, 302, "форма пользователя не сохранилась")
+        self.save_user(user, is_staff="on")
 
         change = ChangeLog.objects.get(action=ChangeLog.Action.UPDATE)
         self.assertEqual((change.field, change.old_value, change.new_value), ("статус персонала", "False", "True"))
+
+    def test_user_groups_are_logged(self):
+        user = User.objects.create_user("moder")
+        group = Group.objects.create(name="Модераторы")
+
+        self.save_user(user, groups=[group.pk])
+        self.assertEqual(self.updates(), [("moder", "группы", "", "Модераторы")])
+
+        self.save_user(user, first_name="Айбек")  # группы не трогали: записи про них нет
+        self.assertEqual([field for _, field, _, _ in self.updates()], ["имя", "группы"])
+
+        self.save_user(user, groups=[])
+        self.assertEqual(self.updates()[0], ("moder", "группы", "Модераторы", ""))
+
+    def test_group_and_its_permissions_are_logged(self):
+        perm = Permission.objects.get(content_type__app_label="rates", codename="view_probe")
+        self.client.post(reverse("admin:auth_group_add"), {"name": "Модераторы", "permissions": [perm.pk]})
+        group = Group.objects.get()
+
+        created = ChangeLog.objects.get(action=ChangeLog.Action.CREATE)
+        self.assertEqual(created.object_label, "Модераторы")
+        ((label, field, old, new),) = self.updates()
+        self.assertEqual((label, field, old), ("Модераторы", "права", ""))
+        self.assertEqual(new, "Пробы: просмотр")  # понятное название вместо «Rates | проба | Can view проба»
+
+        self.client.post(reverse("admin:auth_group_delete", args=[group.pk]), {"post": "yes"})
+        self.assertTrue(ChangeLog.objects.filter(action=ChangeLog.Action.DELETE, object_label="Модераторы").exists())
+
+    def test_permission_lists_use_readable_names(self):
+        group = Group.objects.create(name="Модераторы")
+        for url in [reverse("admin:auth_group_change", args=[group.pk]), reverse("admin:auth_user_change", args=[self.admin.pk])]:
+            with self.subTest(url):
+                response = self.client.get(url)
+                self.assertContains(response, "Пробы: просмотр")
+                self.assertContains(response, "Журнал изменений: просмотр")
+                self.assertNotContains(response, "Can view")
+
+    def test_password_change_is_logged_without_the_password(self):
+        user = User.objects.create_user("moder", password="old-pass")
+        url = reverse("admin:auth_user_password_change", args=[user.pk])
+
+        self.client.post(url, {"usable_password": "true", "password1": "a", "password2": "b"})  # не совпали: не сохранено
+        self.assertFalse(ChangeLog.objects.exists())
+
+        self.client.post(url, {"usable_password": "true", "password1": "Str0ng-pass-123", "password2": "Str0ng-pass-123"})
+        user.refresh_from_db()
+        self.assertTrue(user.check_password("Str0ng-pass-123"))
+        self.assertEqual(self.updates(), [("moder", "пароль", "", "изменён")])
+
+    def test_own_profile_edit_is_logged(self):
+        self.client.post(reverse("admin:rates_profile_change", args=[self.admin.pk]), {"first_name": "Админ", "last_name": "", "email": "admin@example.com"})
+        self.assertEqual(self.updates(), [("admin", "имя", "", "Админ")])

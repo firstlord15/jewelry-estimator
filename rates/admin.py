@@ -11,6 +11,8 @@ from django.urls import reverse
 from django.utils.html import format_html
 
 from core.admin_base import LoggedAdmin
+from core.permissions import PermissionLabelsMixin
+from core.services import log_note
 
 
 @admin.register(Probe)
@@ -28,7 +30,7 @@ class QuickWeightAdmin(LoggedAdmin):
 
 
 @admin.register(Profile)
-class ProfileAdmin(ModelAdmin):
+class ProfileAdmin(LoggedAdmin):
     fields = ("username", "first_name", "last_name", "email", "password_link")
     readonly_fields = ("username", "password_link")
     list_display = ("username", "first_name", "last_name", "email")
@@ -69,12 +71,19 @@ admin.site.unregister(Group)
 
 @admin.register(User)
 # BaseUserAdmin первым: иначе форма создания теряет поле логина. Сохранение и удаление берутся из LoggedAdmin
-class UserAdmin(BaseUserAdmin, LoggedAdmin):
+class UserAdmin(PermissionLabelsMixin, BaseUserAdmin, LoggedAdmin):
     form = UserChangeForm
     add_form = UserCreationForm
     change_password_form = AdminPasswordChangeForm
 
+    # Смена пароля идёт через отдельную страницу, мимо save_model. В журнал пишем только сам факт
+    def user_change_password(self, request, id, form_url=""):
+        response = super().user_change_password(request, id, form_url)
+        if request.method == "POST" and response.status_code == 302:  # 302 = пароль сохранён
+            log_note(User.objects.get(pk=id), request.user, "пароль", "изменён")
+        return response
+
 
 @admin.register(Group)
-class GroupAdmin(BaseGroupAdmin, ModelAdmin):
+class GroupAdmin(PermissionLabelsMixin, BaseGroupAdmin, LoggedAdmin):
     pass

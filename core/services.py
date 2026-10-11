@@ -1,9 +1,11 @@
 from django.conf import settings
+from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
 from django.utils import translation
 
 from .models import ChangeLog
+from .permissions import permission_label
 
 # Не пишем в журнал: пароль (даже хеш), время входа и дату регистрации. Дату форма админки
 # пересохраняет без микросекунд, и без исключения каждая правка пользователя давала бы ложную запись
@@ -72,3 +74,29 @@ def save_logged(obj, user):
 def delete_logged(obj, user):
     _log(obj, ChangeLog.Action.DELETE, user)
     obj.delete()
+
+
+# ---------- Связи «многие ко многим» (группы, права) и события без значений ----------
+
+
+@_in_russian
+def m2m_values(obj):
+    """Связи как списки названий: {поле: ["Модераторы", ...]}. Они сохраняются отдельно от объекта."""
+    return {f: sorted(_item_label(item) for item in getattr(obj, f.name).all()) for f in obj._meta.many_to_many}
+
+
+def _item_label(item):
+    return permission_label(item) if isinstance(item, Permission) else str(item)
+
+
+def log_m2m_changes(obj, before, user):
+    """Сравнивает связи с тем, что было до сохранения (before из m2m_values), и пишет разницу."""
+    for f, new in m2m_values(obj).items():
+        old = before.get(f, [])
+        if old != new:
+            _log(obj, ChangeLog.Action.UPDATE, user, f.verbose_name, ", ".join(old), ", ".join(new))
+
+
+def log_note(obj, user, field, new=""):
+    """Запись без «было»: например «пароль: изменён», когда сами значения в журнал попадать не должны."""
+    _log(obj, ChangeLog.Action.UPDATE, user, field, "", new)
