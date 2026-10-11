@@ -1,6 +1,8 @@
 import re
 
 from django.db import models
+from django.conf import settings
+from django.contrib.contenttypes.models import ContentType
 
 from .localized import Localized
 
@@ -70,3 +72,27 @@ class Phone(models.Model):
     def tel(self):
         """Номер в формате для ссылки tel: (только цифры и +)"""
         return re.sub(r"[^\d+]", "", self.number)
+
+
+class ChangeLog(models.Model):
+    """Запись журнала: кто, когда и что изменил. Создаётся только через core/services.py."""
+
+    class Action(models.TextChoices):
+        CREATE = "create", "Создано"
+        UPDATE = "update", "Изменено"
+        DELETE = "delete", "Удалено"
+
+    content_type = models.ForeignKey(ContentType, on_delete=models.SET_NULL, null=True, verbose_name="Раздел")
+    object_id = models.PositiveBigIntegerField("ID записи", null=True)
+    object_label = models.CharField("Название записи", max_length=255)
+    action = models.CharField("Действие", max_length=10, choices=Action.choices)
+    field = models.CharField("Поле", max_length=255, blank=True)
+    old_value = models.TextField("Старое значение", blank=True)
+    new_value = models.TextField("Новое значение", blank=True)
+    changed_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, verbose_name="Пользователь")
+    changed_at = models.DateTimeField("Дата и время", auto_now_add=True)
+
+    class Meta:
+        ordering = ["-changed_at"]
+        verbose_name = "Запись журнала изменений"
+        verbose_name_plural = "Журнал изменений"

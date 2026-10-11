@@ -2,8 +2,11 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import translation
 
-from .models import SiteSettings
 from django.conf import settings
+from django.contrib.auth.models import User
+
+from .models import ChangeLog, Phone, SiteSettings
+from .services import delete_logged, save_logged
 
 
 class SiteSettingsTests(TestCase):
@@ -147,3 +150,146 @@ class AdminLanguageMiddlewareTests(TestCase):
         self.client.cookies[settings.LANGUAGE_COOKIE_NAME] = "ky"
         response = self.client.get(reverse("admin:index"))
         self.assertContains(response, 'lang="ru"')
+
+
+class ChangeLogServiceTests(TestCase):
+    """Журнал изменений: save_logged и delete_logged из core/services.py."""
+
+    def setUp(self):
+        self.user = User.objects.create_user("moder", password="pass")
+        self.site = SiteSettings.load()
+
+    def new_phone(self, **kwargs):
+        phone = Phone(site=self.site, label="Поддержка", number="+996 555 123 456", **kwargs)
+        save_logged(phone, self.user)
+        return phone
+
+    def test_create_makes_one_record(self):
+        phone = self.new_phone()
+        log = ChangeLog.objects.get()
+        self.assertEqual(log.action, ChangeLog.Action.CREATE)
+        self.assertEqual(log.object_label, "+996 555 123 456")
+        self.assertEqual(log.object_id, phone.pk)
+        self.assertEqual(log.content_type.model, "phone")
+        self.assertEqual(log.changed_by, self.user)
+
+    def test_update_records_each_changed_field(self):
+        phone = self.new_phone()
+        phone.label = "Магазин"
+        phone.order = 5
+        save_logged(phone, self.user)
+
+        changes = {log.field: (log.old_value, log.new_value) for log in ChangeLog.objects.filter(action=ChangeLog.Action.UPDATE)}
+        self.assertEqual(changes, {"Название": ("Поддержка", "Магазин"), "Порядок": ("0", "5")})
+
+    def test_save_without_changes_makes_no_record(self):
+        phone = self.new_phone()
+        save_logged(phone, self.user)
+        save_logged(Phone.objects.get(pk=phone.pk), self.user)
+        self.assertEqual(ChangeLog.objects.count(), 1)  # только создание
+
+    def test_delete_keeps_label_after_object_is_gone(self):
+        phone = self.new_phone()
+        delete_logged(phone, self.user)
+
+        self.assertFalse(Phone.objects.exists())
+        log = ChangeLog.objects.get(action=ChangeLog.Action.DELETE)
+        self.assertEqual(log.object_label, "+996 555 123 456")
+
+    def test_record_survives_user_deletion(self):
+        self.new_phone()
+        self.user.delete()
+        self.assertIsNone(ChangeLog.objects.get().changed_by)
+
+    def test_password_and_last_login_are_never_logged(self):
+        from django.utils import timezone
+
+        target = User.objects.create_user("buyer", password="old-pass")
+        target.set_password("new-pass")
+        target.last_login = timezone.now()
+        target.email = "buyer@example.com"
+        save_logged(target, self.user)
+
+        logs = ChangeLog.objects.all()
+        self.assertEqual([log.field for log in logs], ["адрес электронной почты"])
+        for log in logs:
+            self.assertNotIn("pbkdf2", log.old_value + log.new_value)
+
+    def test_values_are_logged_in_russian_whatever_the_page_language(self):
+        from rates.models import Probe
+
+        probe = Probe(metal="gold", fineness=585, price_per_gram="4800")
+        with translation.override("en"):
+            save_logged(probe, self.user)
+            probe.metal = "silver"
+            save_logged(probe, self.user)
+
+        self.assertEqual(ChangeLog.objects.get(action=ChangeLog.Action.CREATE).object_label, "Золото 585")
+        change = ChangeLog.objects.get(action=ChangeLog.Action.UPDATE)
+        self.assertEqual((change.field, change.old_value, change.new_value), ("металл", "Золото", "Серебро"))
+
+
+class ChangeLogAdminTests(TestCase):
+    """Журнал в админке: правки настроек попадают в него, а сам он только для чтения."""
+
+    def setUp(self):
+        self.admin = User.objects.create_superuser("admin", "admin@example.com", "pass")
+        self.client.force_login(self.admin)
+
+    def settings_form(self, **changes):
+        """Данные формы «Настройки сайта» с текущими значениями и таблицей телефонов."""
+        site = SiteSettings.load()
+        data = {f.name: getattr(site, f.name) or "" for f in SiteSettings._meta.concrete_fields if f.name not in ("id", "logo")}
+        phones = list(site.phones.all())
+        data |= {"phones-TOTAL_FORMS": len(phones), "phones-INITIAL_FORMS": len(phones), "phones-MIN_NUM_FORMS": 0, "phones-MAX_NUM_FORMS": 1000}
+        for i, phone in enumerate(phones):
+            data |= {f"phones-{i}-id": phone.pk, f"phones-{i}-site": site.pk, f"phones-{i}-label": phone.label,
+                     f"phones-{i}-label_ky": phone.label_ky, f"phones-{i}-label_en": phone.label_en,
+                     f"phones-{i}-number": phone.number, f"phones-{i}-order": phone.order}
+        return data | changes
+
+    def post_settings(self, **changes):
+        response = self.client.post(reverse("admin:core_sitesettings_change", args=[1]), self.settings_form(**changes))
+        self.assertEqual(response.status_code, 302, "форма настроек не сохранилась")
+
+    def test_settings_change_is_logged_with_user(self):
+        self.post_settings(address="Бишкек, Ибраимова 113")
+        log = ChangeLog.objects.get()
+        self.assertEqual((log.field, log.old_value, log.new_value), ("Адрес", "", "Бишкек, Ибраимова 113"))
+        self.assertEqual(log.changed_by, self.admin)
+
+    def test_phone_rows_are_logged(self):
+        phone = SiteSettings.load().phones.create(label="Поддержка", number="+996 555 123 456")
+
+        self.post_settings(**{"phones-0-number": "+996 700 000 000"})
+        change = ChangeLog.objects.get(action=ChangeLog.Action.UPDATE)
+        self.assertEqual((change.field, change.old_value, change.new_value), ("Номер", "+996 555 123 456", "+996 700 000 000"))
+
+        self.post_settings(**{"phones-0-DELETE": "on"})
+        self.assertFalse(Phone.objects.filter(pk=phone.pk).exists())
+        self.assertEqual(ChangeLog.objects.filter(action=ChangeLog.Action.DELETE).count(), 1)
+
+    def test_list_names_object_with_its_kind(self):
+        user = User.objects.create_user("test2")
+        save_logged(user, self.admin)  # ничего не изменилось, записи нет
+        user.email = "test2@example.com"
+        save_logged(user, self.admin)
+
+        user.username = "test3"
+        save_logged(user, self.admin)
+        self.post_settings(address="Бишкек")
+
+        response = self.client.get(reverse("admin:core_changelog_changelist"))
+        # при переименовании запись относится к прежнему названию
+        self.assertContains(response, "Пользователь: test2", count=2)
+        self.assertNotContains(response, "Пользователь: test3")
+        # название совпадает с видом объекта: без повтора
+        self.assertNotContains(response, "Настройки сайта: Настройки сайта")
+
+    def test_journal_is_read_only(self):
+        log = ChangeLog.objects.create(object_label="Проба", action=ChangeLog.Action.CREATE)
+        self.assertEqual(self.client.get(reverse("admin:core_changelog_changelist")).status_code, 200)
+        self.assertEqual(self.client.get(reverse("admin:core_changelog_add")).status_code, 403)
+        self.assertEqual(self.client.post(reverse("admin:core_changelog_change", args=[log.pk]), {"object_label": "x"}).status_code, 403)
+        self.assertEqual(self.client.post(reverse("admin:core_changelog_delete", args=[log.pk]), {"post": "yes"}).status_code, 403)
+        self.assertTrue(ChangeLog.objects.filter(pk=log.pk, object_label="Проба").exists())
