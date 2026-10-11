@@ -3,13 +3,20 @@ from django.core.management.base import BaseCommand, CommandError
 
 MODERATORS_GROUP = "Модераторы"
 
-# Что может модератор: (приложение, модель, действия). Пользователи и группы только у администратора
+# Что может модератор: (приложение, модель, действия).
+# Пользователи и группы только у администратора
 MODERATOR_PERMISSIONS = [
     ("rates", "probe", ["view", "add", "change", "delete"]),
     ("rates", "quickweight", ["view", "add", "change", "delete"]),
     ("core", "sitesettings", ["view", "change"]),
     ("core", "phone", ["view", "add", "change", "delete"]),
     ("core", "changelog", ["view"]),  # журнал только читают
+    ("catalog", "product", ["view", "add", "change", "delete"]),
+    ("catalog", "productvariant", ["view", "add", "change", "delete"]),
+    ("catalog", "productimage", ["view", "add", "change", "delete"]),
+    ("catalog", "category", ["view", "add", "change", "delete"]),
+    ("catalog", "attribute", ["view", "add", "change", "delete"]),
+    ("catalog", "attributevalue", ["view", "add", "change", "delete"]),
 ]
 
 

@@ -125,6 +125,30 @@ UNFOLD = {
                     },
                 ],
             },
+            {
+                "title": _("Каталог"),
+                "separator": True,
+                "items": [
+                    {
+                        "title": _("Товары"),
+                        "icon": "inventory_2",
+                        "link": reverse_lazy("admin:catalog_product_changelist"),
+                        "permission": lambda request: request.user.has_perm("catalog.view_product"),
+                    },
+                    {
+                        "title": _("Категории"),
+                        "icon": "category",
+                        "link": reverse_lazy("admin:catalog_category_changelist"),
+                        "permission": lambda request: request.user.has_perm("catalog.view_category"),
+                    },
+                    {
+                        "title": _("Характеристики"),
+                        "icon": "tune",
+                        "link": reverse_lazy("admin:catalog_attribute_changelist"),
+                        "permission": lambda request: request.user.has_perm("catalog.view_attribute"),
+                    },
+                ],
+            },
         ],
     },
 }
