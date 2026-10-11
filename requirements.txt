@@ -7,3 +7,4 @@ psycopg-binary==3.3.6
 whitenoise==6.12.0
 django-unfold==0.108.0
 pillow==12.3.0
+django-imagekit==6.1.1
