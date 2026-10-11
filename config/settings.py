@@ -85,8 +85,8 @@ UNFOLD = {
                     {
                         "title": _("История изменений"),
                         "icon": "history",
-                        "link": reverse_lazy("admin:rates_pricechange_changelist"),
-                        "permission": lambda request: request.user.has_perm("rates.view_pricechange"),
+                        "link": reverse_lazy("admin:core_changelog_changelist"),
+                        "permission": lambda request: request.user.has_perm("core.view_changelog"),
                     },
                 ],
             },

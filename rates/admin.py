@@ -5,56 +5,26 @@ from django.contrib.auth.models import Group, User
 
 from unfold.admin import ModelAdmin
 from unfold.forms import AdminPasswordChangeForm, UserChangeForm, UserCreationForm
-from .models import PriceChange, Probe, Profile, QuickWeight
-from .services import delete_probe, save_probe
+from .models import Probe, Profile, QuickWeight
 
 from django.urls import reverse
 from django.utils.html import format_html
 
+from core.admin_base import LoggedAdmin
+
 
 @admin.register(Probe)
-class ProbeAdmin(ModelAdmin):
+class ProbeAdmin(LoggedAdmin):
     list_display = ("__str__", "price_per_gram", "is_active", "updated_at")
     list_editable = ("price_per_gram", "is_active")
     list_filter = ("metal", "is_active")
 
-    def save_model(self, request, obj, form, change):
-        save_probe(obj, request.user)
-
-    def delete_model(self, request, obj):
-        delete_probe(obj, request.user)
-
-    def delete_queryset(self, request, queryset):
-        # Массовое удаление через «Действия» в списке
-        for probe in queryset:
-            delete_probe(probe, request.user)
-
 
 @admin.register(QuickWeight)
-class QuickWeightAdmin(ModelAdmin):
+class QuickWeightAdmin(LoggedAdmin):
     list_display = ("__str__", "is_active")
     list_editable = ("is_active",)
     list_filter = ("is_active",)
-
-
-@admin.register(PriceChange)
-class PriceChangeAdmin(ModelAdmin):
-    list_display = (
-        "changed_at", "probe_label", "action", "old_price", "new_price", "changed_by",
-    )
-    list_filter = ("action", "changed_by")
-    search_fields = ("probe_label",)
-    date_hierarchy = "changed_at"
-    list_select_related = ("changed_by",)
-
-    def has_add_permission(self, request):
-        return False
-
-    def has_change_permission(self, request, obj=None):
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        return False
 
 
 @admin.register(Profile)
@@ -98,7 +68,8 @@ admin.site.unregister(Group)
 
 
 @admin.register(User)
-class UserAdmin(BaseUserAdmin, ModelAdmin):
+# BaseUserAdmin первым: иначе форма создания теряет поле логина. Сохранение и удаление берутся из LoggedAdmin
+class UserAdmin(BaseUserAdmin, LoggedAdmin):
     form = UserChangeForm
     add_form = UserCreationForm
     change_password_form = AdminPasswordChangeForm

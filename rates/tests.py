@@ -3,7 +3,11 @@ from decimal import Decimal
 from django.test import TestCase
 from django.urls import reverse
 
+from django.contrib.auth.models import User
 from django.test import override_settings
+
+from core.models import ChangeLog
+
 from .models import Probe, QuickWeight
 
 
@@ -86,3 +90,61 @@ class QuickWeightsTests(TestCase):
 
     def test_empty_by_default(self):
         self.assertEqual(self.client.get(self.url).json()["quick_weights"], [])
+
+
+class RatesChangeLogTests(TestCase):
+    """Пробы, быстрые веса и пользователи в админке пишут в общий журнал изменений."""
+
+    def setUp(self):
+        self.admin = User.objects.create_superuser("admin", "admin@example.com", "pass")
+        self.client.force_login(self.admin)
+
+    def test_probe_created_in_admin(self):
+        self.client.post(reverse("admin:rates_probe_add"), {"metal": "gold", "fineness": 585, "price_per_gram": "4800.50", "is_active": "on"})
+        log = ChangeLog.objects.get()
+        self.assertEqual((log.action, log.object_label, log.changed_by), (ChangeLog.Action.CREATE, "Золото 585", self.admin))
+
+    def test_price_change_shows_old_and_new(self):
+        probe = Probe.objects.create(metal="gold", fineness=585, price_per_gram=Decimal("4800.50"))
+        url = reverse("admin:rates_probe_change", args=[probe.pk])
+
+        # та же цена, записанная иначе («4800.5»): это не изменение
+        self.client.post(url, {"metal": "gold", "fineness": 585, "price_per_gram": "4800.5", "is_active": "on"})
+        self.assertFalse(ChangeLog.objects.exists())
+
+        self.client.post(url, {"metal": "gold", "fineness": 585, "price_per_gram": "4900", "is_active": "on"})
+        log = ChangeLog.objects.get()
+        self.assertEqual((log.field, log.old_value, log.new_value), ("цена за 1 г, сом", "4800.50", "4900.00"))
+
+    def test_probe_deleted_one_by_one_and_in_bulk(self):
+        first = Probe.objects.create(metal="gold", fineness=585, price_per_gram=Decimal("4800"))
+        Probe.objects.create(metal="gold", fineness=750, price_per_gram=Decimal("6000"))
+        Probe.objects.create(metal="silver", fineness=925, price_per_gram=Decimal("155"))
+
+        self.client.post(reverse("admin:rates_probe_delete", args=[first.pk]), {"post": "yes"})
+        rest = list(Probe.objects.values_list("pk", flat=True))
+        self.client.post(reverse("admin:rates_probe_changelist"), {"action": "delete_selected", "_selected_action": rest, "post": "yes"})
+
+        self.assertFalse(Probe.objects.exists())
+        labels = set(ChangeLog.objects.filter(action=ChangeLog.Action.DELETE).values_list("object_label", flat=True))
+        self.assertEqual(labels, {"Золото 585", "Золото 750", "Серебро 925"})
+
+    def test_quick_weight_is_logged(self):
+        self.client.post(reverse("admin:rates_quickweight_add"), {"grams": "33", "is_active": "on"})
+        self.assertEqual(ChangeLog.objects.get().object_label, "33 г")
+
+    def test_user_created_and_edited_in_admin(self):
+        self.client.post(reverse("admin:auth_user_add"), {"username": "moder", "usable_password": "true", "password1": "Str0ng-pass-123", "password2": "Str0ng-pass-123"})
+        user = User.objects.get(username="moder")
+        created = ChangeLog.objects.get()
+        self.assertEqual((created.action, created.object_label), (ChangeLog.Action.CREATE, "moder"))
+
+        form = self.client.get(reverse("admin:auth_user_change", args=[user.pk])).context["adminform"].form
+        data = {name: value for name, value in form.initial.items() if value not in (None, [], False)}
+        data |= {"date_joined_0": user.date_joined.date().isoformat(), "date_joined_1": user.date_joined.strftime("%H:%M:%S"), "is_staff": "on"}
+        data.pop("date_joined", None), data.pop("password", None), data.pop("last_login", None)
+        response = self.client.post(reverse("admin:auth_user_change", args=[user.pk]), data)
+        self.assertEqual(response.status_code, 302, "форма пользователя не сохранилась")
+
+        change = ChangeLog.objects.get(action=ChangeLog.Action.UPDATE)
+        self.assertEqual((change.field, change.old_value, change.new_value), ("статус персонала", "False", "True"))
