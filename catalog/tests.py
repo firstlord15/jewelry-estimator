@@ -327,3 +327,20 @@ class CatalogAdminListTests(CatalogData, TestCase):
 
         self.client.get(url)  # первый запрос прогревает кеши Django
         self.assertEqual(queries_with(3, "a"), queries_with(10, "b"))  # товаров больше, запросов столько же
+
+class SeedCatalogTests(TestCase):
+    def test_second_run_creates_nothing(self):
+        Probe.objects.create(metal="gold", fineness=585, price_per_gram=Decimal("5000"))
+        call_command("seed_catalog", verbosity=0)
+        counts = (Product.objects.count(), ProductVariant.objects.count(), Category.objects.count())
+        self.assertEqual(counts[0], 25)
+
+        call_command("seed_catalog", verbosity=0)
+        self.assertEqual((Product.objects.count(), ProductVariant.objects.count(), Category.objects.count()), counts)
+
+    def test_stops_without_probes(self):
+        from django.core.management.base import CommandError
+
+        with self.assertRaises(CommandError):
+            call_command("seed_catalog", verbosity=0)
+        self.assertFalse(Product.objects.exists())

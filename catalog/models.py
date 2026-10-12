@@ -86,10 +86,12 @@ class Product(models.Model):
 
     sku = models.PositiveIntegerField("Артикул", unique=True, editable=False, null=True)
     category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name="products", verbose_name="Категория")
+    
     probe = models.ForeignKey(
         "rates.Probe", on_delete=models.PROTECT, related_name="products", verbose_name="Проба",
         help_text="От пробы зависят металл и цена за грамм",
     )
+    
     name = models.CharField("Название", max_length=255)
     name_ky = models.CharField("Название (кыргызча)", max_length=255, blank=True)
     name_en = models.CharField("Название (English)", max_length=255, blank=True)
@@ -101,14 +103,17 @@ class Product(models.Model):
         "Доплата, сом", max_digits=12, decimal_places=2, default=0,
         validators=[MinValueValidator(Decimal("0"))], help_text="За работу и камни: прибавляется к цене металла",
     )
+    
     # Не «attributes»: поле формы с таким именем подменяет встроенное свойство form.attributes,
     # и скрипты админки (Alpine, htmx) падают — страница товара остаётся пустой
     attribute_values = models.ManyToManyField(
         AttributeValue, blank=True, related_name="products", verbose_name="Характеристики"
     )
+    
     is_active = models.BooleanField(
         "Показывать на сайте", default=True, help_text="Снимите галочку, чтобы скрыть товар, не удаляя его"
     )
+
     created_at = models.DateTimeField("Создан", auto_now_add=True)
     updated_at = models.DateTimeField("Обновлён", auto_now=True)
 
