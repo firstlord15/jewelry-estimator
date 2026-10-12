@@ -45,6 +45,20 @@ class CatalogAdminListTests(TestCase):
         self.client.post(reverse("admin:catalog_category_changelist"), data)
         self.assertEqual(list(Category.objects.values_list("name", flat=True)), ["Серьги", "Кольца"])
 
+    def test_form_fields_do_not_shadow_html_form_properties(self):
+        """Поле формы с именем свойства HTML-формы (attributes, action…) ломает скрипты админки:
+        form.attributes начинает возвращать поле, и страница товара остаётся пустой."""
+        from django.contrib import admin
+
+        from . import models
+
+        reserved = {"attributes", "action", "method", "target", "elements", "children", "style", "submit", "reset", "length", "classList", "dataset"}
+        for model in (models.Product, models.Category, models.Attribute, models.AttributeValue, models.ProductVariant, models.ProductImage):
+            names = {field.name for field in model._meta.get_fields()}
+            with self.subTest(model.__name__):
+                self.assertFalse(names & reserved)
+        self.assertIn("attribute_values", admin.site._registry[models.Product].filter_horizontal)
+
     def test_product_opens_by_sku_and_by_name(self):
         product = self.new_product("a")
         url = reverse("admin:catalog_product_change", args=[product.pk])

@@ -40,10 +40,10 @@ class ProductAdmin(LoggedAdmin):
     # --- форма товара ---
     readonly_fields = ("sku",)
     prepopulated_fields = { "slug": ("name",) }
-    filter_horizontal = ("attributes",)
+    filter_horizontal = ("attribute_values",)
 
     fieldsets = (
-        (None, {"fields": ("sku", "name", "slug", "category", "probe", "surcharge", "description", "attributes", "is_active")}),
+        (None, {"fields": ("sku", "name", "slug", "category", "probe", "surcharge", "description", "attribute_values", "is_active")}),
         ("Кыргызча", {"classes": ["tab"], "fields": ("name_ky", "description_ky")}),
         ("English", {"classes": ["tab"], "fields": ("name_en", "description_en")}),
     )

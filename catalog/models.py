@@ -101,7 +101,11 @@ class Product(models.Model):
         "Доплата, сом", max_digits=12, decimal_places=2, default=0,
         validators=[MinValueValidator(Decimal("0"))], help_text="За работу и камни: прибавляется к цене металла",
     )
-    attributes = models.ManyToManyField(AttributeValue, blank=True, related_name="products", verbose_name="Характеристики")
+    # Не «attributes»: поле формы с таким именем подменяет встроенное свойство form.attributes,
+    # и скрипты админки (Alpine, htmx) падают — страница товара остаётся пустой
+    attribute_values = models.ManyToManyField(
+        AttributeValue, blank=True, related_name="products", verbose_name="Характеристики"
+    )
     is_active = models.BooleanField(
         "Показывать на сайте", default=True, help_text="Снимите галочку, чтобы скрыть товар, не удаляя его"
     )
