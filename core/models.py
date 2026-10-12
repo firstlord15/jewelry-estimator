@@ -5,6 +5,7 @@ from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 
 from .localized import Localized
+from .ordering import AutoOrderMixin
 
 
 class SiteSettings(models.Model):
@@ -49,8 +50,10 @@ class SiteSettings(models.Model):
         obj, _ = cls.objects.get_or_create(pk=1)
         return obj
 
-class Phone(models.Model):
+class Phone(AutoOrderMixin, models.Model):
     """Телефонный номер для контактов сайта."""
+
+    order_scope = "site"
     site = models.ForeignKey(SiteSettings, on_delete=models.CASCADE, related_name="phones")
     label = models.CharField("Название", max_length=255, blank=True, help_text="Например, «Контакт-центр»")
     label_ky = models.CharField("Название (кыргызча)", max_length=255, blank=True)

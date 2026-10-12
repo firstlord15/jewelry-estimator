@@ -176,11 +176,12 @@ class ChangeLogServiceTests(TestCase):
     def test_update_records_each_changed_field(self):
         phone = self.new_phone()
         phone.label = "Магазин"
-        phone.order = 5
+        phone.number = "+996 700 000 000"
+        phone.order = 5  # порядок в журнал не пишется: его меняют перетаскиванием сразу у многих записей
         save_logged(phone, self.user)
 
         changes = {log.field: (log.old_value, log.new_value) for log in ChangeLog.objects.filter(action=ChangeLog.Action.UPDATE)}
-        self.assertEqual(changes, {"Название": ("Поддержка", "Магазин"), "Порядок": ("0", "5")})
+        self.assertEqual(changes, {"Название": ("Поддержка", "Магазин"), "Номер": ("+996 555 123 456", "+996 700 000 000")})
 
     def test_save_without_changes_makes_no_record(self):
         phone = self.new_phone()
@@ -338,3 +339,26 @@ class ModeratorRoleTests(TestCase):
         probe = Probe.objects.create(metal="gold", fineness=585, price_per_gram="4800")
         self.client.post(reverse("admin:rates_probe_change", args=[probe.pk]), {"metal": "gold", "fineness": 585, "price_per_gram": "4900", "is_active": "on"})
         self.assertEqual(ChangeLog.objects.get().changed_by, self.moder)
+
+
+class AutoOrderTests(TestCase):
+    """Новая запись встаёт в конец списка; дальше порядок меняют перетаскиванием."""
+
+    def test_new_phones_go_to_the_end(self):
+        site = SiteSettings.load()
+        orders = [site.phones.create(number=f"+996 55{i}").order for i in range(3)]
+        self.assertEqual(orders, [0, 1, 2])
+
+    def test_explicit_order_is_kept(self):
+        site = SiteSettings.load()
+        site.phones.create(number="1")
+        self.assertEqual(site.phones.create(number="2", order=7).order, 7)
+        self.assertEqual(site.phones.create(number="3").order, 8)  # следующий после самого большого
+
+    def test_resaving_does_not_move_the_first_record(self):
+        site = SiteSettings.load()
+        first = site.phones.create(number="1")
+        site.phones.create(number="2")
+        first.label = "Поддержка"
+        first.save()
+        self.assertEqual(Phone.objects.get(pk=first.pk).order, 0)

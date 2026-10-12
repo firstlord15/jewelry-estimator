@@ -11,7 +11,9 @@ class PhoneInline(TabularInline):
     model = Phone
     extra = 0
     fields = ("label", "label_ky", "label_en", "number", "order")
-    verbose_name_plural = "Телефоны (footer => первый в порядке)"
+    verbose_name_plural = "Телефоны (первый показывается в подвале, порядок меняется перетаскиванием)"
+    ordering_field = "order"
+    hide_ordering_field = True
 
 
 @admin.register(SiteSettings)

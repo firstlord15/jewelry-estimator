@@ -7,6 +7,7 @@ from imagekit.models import ImageSpecField
 from imagekit.processors import ResizeToFill, ResizeToFit
 
 from core.localized import Localized
+from core.ordering import AutoOrderMixin
 
 MAX_IMAGE_SIZE_MB = 10
 
@@ -16,7 +17,7 @@ def validate_image_size(image):
         raise ValidationError(f"Файл больше {MAX_IMAGE_SIZE_MB} МБ. Уменьшите фото и загрузите снова.")
 
 
-class Category(models.Model):
+class Category(AutoOrderMixin, models.Model):
     """Категория каталога: «Кольца», «Серьги». Без вложенности."""
 
     name = models.CharField("Название", max_length=255)
@@ -37,7 +38,7 @@ class Category(models.Model):
         return self.name
 
 
-class Attribute(models.Model):
+class Attribute(AutoOrderMixin, models.Model):
     """Характеристика товара, которую заводят модераторы: «Камень», «Цвет металла»."""
 
     name = models.CharField("Название", max_length=255)
@@ -178,8 +179,10 @@ class ProductVariant(models.Model):
         return self.custom_price if self.custom_price is not None else self.calculated_price
 
 
-class ProductImage(models.Model):
+class ProductImage(AutoOrderMixin, models.Model):
     """Фото товара. Оригинал хранится как есть, миниатюры в WebP создаются при первом показе."""
+
+    order_scope = "product"
 
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="images", verbose_name="Товар")
     image = models.ImageField("Фото", upload_to="products/", validators=[validate_image_size])
