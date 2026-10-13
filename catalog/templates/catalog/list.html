@@ -39,7 +39,7 @@
                     {% endfor %}
                 </div>
             </fieldset>
-            {% for attribute in attributes %}
+            {% for attribute in groups %}
                 {% if attribute.values.all %}
                     <fieldset class="filters__group">
                         <legend>{{ attribute.name_local }}</legend>
