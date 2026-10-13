@@ -96,3 +96,12 @@
     }
   };
 })();
+
+// ---------- Полоска прогресса для запросов HTMX ----------
+// Обычный переход между страницами показывает сам браузер; запрос без перезагрузки он не показывает
+(() => {
+  const progress = document.querySelector("#progress");
+  if (!progress) return;
+  document.addEventListener("htmx:beforeRequest", () => progress.classList.add("is-active"));
+  document.addEventListener("htmx:afterRequest", () => progress.classList.remove("is-active"));
+})();

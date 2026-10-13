@@ -1,5 +1,6 @@
-{% load static i18n %} {% get_current_language as LANGUAGE_CODE %}
-<!doctype html>
+{% load static i18n %}
+{% get_current_language as LANGUAGE_CODE %}
+<!DOCTYPE html>
 <html lang="{{ LANGUAGE_CODE }}">
     <head>
         <meta charset="utf-8" />
@@ -9,18 +10,24 @@
         <link rel="stylesheet" href="{% static 'css/base.css' %}" />
         <link rel="stylesheet" href="{% static 'css/partials/header.css' %}" />
         <link rel="stylesheet" href="{% static 'css/partials/footer.css' %}" />
-
-        {% block extra_css %}{% endblock %}
+        {% block extra_css %}
+        {% endblock %}
     </head>
     <body {% block body_attrs %}{% endblock %}>
         <a class="skip-link" href="#content">{% trans "Перейти к содержимому" %}</a>
+        {# Полоска вверху страницы: видна, пока идёт запрос HTMX (фильтры каталога, «Показать ещё») #}
+        <div class="progress" id="progress" aria-hidden="true"></div>
         <div class="page">
             {% include "partials/header.html" %}
-            <main class="container" id="content" tabindex="-1">{% block content %}{% endblock %}</main>
+            <main class="container" id="content" tabindex="-1">
+                {% block content %}
+                {% endblock %}
+            </main>
             {% include "partials/footer.html" %}
         </div>
-
+        <script src="{% static 'js/htmx.min.js' %}" defer></script>
         <script src="{% static 'js/base.js' %}" defer></script>
-        {% block extra_js %}{% endblock %}
+        {% block extra_js %}
+        {% endblock %}
     </body>
 </html>
