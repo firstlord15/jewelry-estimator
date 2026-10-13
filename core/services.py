@@ -10,7 +10,7 @@ from .permissions import permission_label
 # Не пишем в журнал: пароль (даже хеш), время входа и дату регистрации. Дату форма админки
 # пересохраняет без микросекунд, и без исключения каждая правка пользователя давала бы ложную запись
 # Порядок (order) тоже пропускаем: одно перетаскивание в списке меняет номера сразу у многих записей
-SKIP_FIELDS = {"password", "last_login", "date_joined", "order"}
+SKIP_FIELDS = {"views", "password", "last_login", "date_joined", "order"}
 
 
 def _in_russian(func):

@@ -40,6 +40,13 @@ class Category(AutoOrderMixin, models.Model):
     name = models.CharField("Название", max_length=255)
     name_ky = models.CharField("Название (кыргызча)", max_length=255, blank=True)
     name_en = models.CharField("Название (English)", max_length=255, blank=True)
+    banner = models.ImageField("Баннер", upload_to="categories/", blank=True, validators=[validate_image_size])
+    banner_wide = ImageSpecField(
+        source="banner",
+        processors=[ResizeToFill(1600, 500)],
+        format="WEBP",
+        options={"quality": 85}, 
+    )
     slug = models.SlugField("Адрес", unique=True, help_text="Часть адреса страницы: /catalog/rings/")
     order = models.PositiveIntegerField("Порядок", default=0)
     is_active = models.BooleanField("Показывать на сайте", default=True)
@@ -63,6 +70,9 @@ class Attribute(AutoOrderMixin, models.Model):
     name_en = models.CharField("Название (English)", max_length=255, blank=True)
     order = models.PositiveIntegerField("Порядок", default=0)
 
+    is_filter = models.BooleanField("Показывать в фильтре каталога", default=True)
+    is_searchable = models.BooleanField("Показывать поле поиска", default=False)
+
     name_local = Localized("name")
 
     class Meta:
@@ -74,18 +84,22 @@ class Attribute(AutoOrderMixin, models.Model):
         return self.name
 
 
-class AttributeValue(models.Model):
+class AttributeValue(AutoOrderMixin, models.Model):
     """Значение характеристики: «Фианит» у «Камня»."""
+
+    order_scope = "attribute"
 
     attribute = models.ForeignKey(Attribute, on_delete=models.CASCADE, related_name="values", verbose_name="Характеристика")
     value = models.CharField("Значение", max_length=255)
     value_ky = models.CharField("Значение (кыргызча)", max_length=255, blank=True)
     value_en = models.CharField("Значение (English)", max_length=255, blank=True)
+    order = models.PositiveIntegerField("Порядок", default=0)
+    is_quick = models.BooleanField("Быстрый фильтр", default=False, help_text="Показывать кнопкой над товарами")
 
     value_local = Localized("value")
 
     class Meta:
-        ordering = ["attribute", "value"]
+        ordering = ["attribute", "order", "value"]
         verbose_name = "Значение характеристики"
         verbose_name_plural = "Значения характеристик"
         constraints = [
@@ -114,6 +128,7 @@ class Product(models.Model):
     description = models.TextField("Описание", blank=True)
     description_ky = models.TextField("Описание (кыргызча)", blank=True)
     description_en = models.TextField("Описание (English)", blank=True)
+    views = models.PositiveIntegerField("Просмотры", default=0, editable=False)
     slug = models.SlugField("Адрес", unique=True, help_text="Часть адреса страницы товара")
     surcharge = models.DecimalField(
         "Доплата, сом", max_digits=12, decimal_places=2, default=0,

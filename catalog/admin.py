@@ -21,7 +21,6 @@ class ImageInline(TabularInline):
     model = ProductImage
     extra = 0
     fields = ("image", "order")
-    # Порядок меняют перетаскиванием строк, само поле с номером скрыто. Первое фото — обложка
     ordering_field = "order"
     hide_ordering_field = True
 
@@ -31,19 +30,19 @@ class ProductAdmin(LoggedAdmin):
     inlines = [VariantInline, ImageInline]
 
     # --- список товаров ---
-    list_display = ("sku", "name", "category", "probe", "price_from", "is_active")
+    list_display = ("sku", "name", "category", "probe", "price_from", "views", "is_active")
     list_display_links = ("sku", "name")  # форма товара открывается и по артикулу, и по названию
     list_filter = ("category", "probe", "is_active")
     search_fields = ("name", "sku")
     list_select_related = ("category", "probe")
 
     # --- форма товара ---
-    readonly_fields = ("sku",)
+    readonly_fields = ("sku", "views")
     prepopulated_fields = { "slug": ("name",) }
     filter_horizontal = ("attribute_values",)
 
     fieldsets = (
-        (None, {"fields": ("sku", "name", "slug", "category", "probe", "surcharge", "description", "attribute_values", "is_active")}),
+        (None, {"fields": ("sku", "name", "slug", "category", "probe", "surcharge", "description", "attribute_values", "views", "is_active")}),
         ("Кыргызча", {"classes": ["tab"], "fields": ("name_ky", "description_ky")}),
         ("English", {"classes": ["tab"], "fields": ("name_en", "description_en")}),
     )
@@ -69,15 +68,18 @@ class CategoryAdmin(LoggedAdmin):
 
 
 class ValueInline(TabularInline):
+    fields = ("value", "value_ky", "value_en", "is_quick", "order")
+    ordering_field = "order"
+    hide_ordering_field = True
     model = AttributeValue
     extra = 0
-    fields = ("value", "value_ky", "value_en")
 
 
 @admin.register(Attribute)
 class AttributeAdmin(LoggedAdmin):
     inlines = [ValueInline]
-    list_display = ("name",)
+    list_display = ("name", "is_filter", "is_searchable")
+    list_editable = ("is_filter", "is_searchable")
     exclude = ("order",)
     ordering_field = "order"
     hide_ordering_field = True
