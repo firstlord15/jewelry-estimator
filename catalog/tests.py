@@ -19,6 +19,9 @@ class CatalogData:
     """Общие данные для тестов каталога: проба 585 по 5000 сом за грамм и категория «Кольца»."""
 
     def setUp(self):
+        # Язык остаётся от запроса в предыдущем тесте (например, к /en/…), и reverse() начал бы
+        # собирать адреса с его префиксом. Каждый тест начинаем с русского
+        translation.activate("ru")
         self.probe = Probe.objects.create(metal="gold", fineness=585, price_per_gram=Decimal("5000"))
         self.category = Category.objects.create(name="Кольца", slug="rings")
 
@@ -263,6 +266,154 @@ class CatalogModeratorTests(CatalogData, TestCase):
             with self.subTest(name):
                 self.assertContains(response, f'href="{reverse(name)}"')
         self.assertNotContains(response, f'href="{reverse("admin:auth_user_changelist")}"')
+
+
+class CatalogPagesTests(CatalogData, TestCase):
+    """Страницы каталога на сайте: список, категория, товар, фильтры и подгрузка."""
+
+    def setUp(self):
+        super().setUp()
+        self.silver = Probe.objects.create(metal="silver", fineness=925, price_per_gram=Decimal("100"))
+        self.cheap = self.new_product("cheap")
+        self.cheap.variants.create(size="17", weight=Decimal("1"))  # 5 000
+        self.costly = self.new_product("costly")
+        self.costly.variants.create(size="17", weight=Decimal("3"))  # 15 000
+        self.costly.variants.create(size="18", weight=Decimal("4"), in_stock=False)
+        self.sold_out = self.new_product("sold-out")
+        self.sold_out.variants.create(weight=Decimal("2"), in_stock=False)
+
+    def slugs(self, url, **params):
+        """Адреса товаров на странице в том порядке, в каком они показаны."""
+        return [product.slug for product in self.client.get(url, params).context["page"]]
+
+    def test_pages_open_in_all_languages(self):
+        for lang in ["ru", "ky", "en"]:
+            with translation.override(lang):
+                urls = [reverse("catalog"), reverse("catalog_category", args=["rings"]), reverse("product", args=["cheap"])]
+            for url in urls:
+                with self.subTest(url):
+                    self.assertEqual(self.client.get(url).status_code, 200)
+
+    def test_unknown_category_and_product_give_404(self):
+        self.assertEqual(self.client.get(reverse("catalog_category", args=["nope"])).status_code, 404)
+        self.assertEqual(self.client.get(reverse("product", args=["nope"])).status_code, 404)
+
+    def test_hidden_products_are_not_shown(self):
+        hidden = self.new_product("hidden", is_active=False)
+        other = Category.objects.create(name="Скрытая", slug="hidden-cat", is_active=False)
+        in_hidden_category = Product.objects.create(category=other, probe=self.probe, name="Товар", slug="in-hidden")
+
+        shown = self.slugs(reverse("catalog"))
+        for product in (hidden, in_hidden_category):
+            with self.subTest(product.slug):
+                self.assertNotIn(product.slug, shown)
+                self.assertEqual(self.client.get(reverse("product", args=[product.slug])).status_code, 404)
+        self.assertEqual(self.client.get(reverse("catalog_category", args=["hidden-cat"])).status_code, 404)
+
+    def test_price_from_matches_min_price(self):
+        self.cheap.variants.create(size="18", weight=Decimal("9"), custom_price=Decimal("1234.50"))
+        for product in Product.objects.with_price().prefetch_related("variants"):
+            with self.subTest(product.slug):
+                self.assertEqual(product.price_from, product.min_price)
+
+    def test_category_page_shows_only_its_products(self):
+        chains = Category.objects.create(name="Цепи", slug="chains")
+        Product.objects.create(category=chains, probe=self.probe, name="Цепь", slug="chain")
+        self.assertEqual(self.slugs(reverse("catalog_category", args=["chains"])), ["chain"])
+        self.assertNotIn("chain", self.slugs(reverse("catalog_category", args=["rings"])))
+
+    def test_sorting(self):
+        url = reverse("catalog")
+        self.assertEqual(self.slugs(url, sort="cheap"), ["cheap", "costly", "sold-out"])  # без цены в конце
+        self.assertEqual(self.slugs(url, sort="expensive"), ["costly", "cheap", "sold-out"])
+        self.assertEqual(self.slugs(url)[0], "sold-out")  # по умолчанию сначала новые
+
+    def test_filters(self):
+        url = reverse("catalog")
+        silver = Product.objects.create(category=self.category, probe=self.silver, name="Серебро", slug="silver")
+        silver.variants.create(weight=Decimal("10"))  # 1 000
+        stone = Attribute.objects.create(name="Камень")
+        zircon = AttributeValue.objects.create(attribute=stone, value="Фианит")
+        diamond = AttributeValue.objects.create(attribute=stone, value="Бриллиант")
+        color = AttributeValue.objects.create(attribute=Attribute.objects.create(name="Цвет"), value="Белое")
+        self.cheap.attribute_values.add(zircon, color)
+        self.costly.attribute_values.add(diamond)
+
+        self.assertEqual(self.slugs(url, probe=self.silver.pk), ["silver"])
+        self.assertEqual(self.slugs(url, in_stock=1, sort="cheap"), ["silver", "cheap", "costly"])
+        self.assertEqual(self.slugs(url, price_min="4000", price_max="6000"), ["cheap"])
+        # внутри одной характеристики «или», между разными «и»
+        self.assertEqual(self.slugs(url, value=[zircon.pk, diamond.pk], sort="cheap"), ["cheap", "costly"])
+        self.assertEqual(self.slugs(url, value=[zircon.pk, diamond.pk, color.pk]), ["cheap"])
+
+    def test_garbage_in_address_does_not_break_the_page(self):
+        response = self.client.get(reverse("catalog"), {"probe": "abc", "value": "x", "price_min": "дорого", "sort": "?", "page": "99"})
+        self.assertEqual(response.status_code, 200)
+
+    def test_filter_form_keeps_selected_values(self):
+        response = self.client.get(reverse("catalog"), {"probe": self.probe.pk, "price_min": "100", "in_stock": 1})
+        self.assertContains(response, f'name="probe" value="{self.probe.pk}" checked')
+        self.assertNotContains(response, f'name="probe" value="{self.silver.pk}" checked')
+        self.assertContains(response, 'name="price_min" inputmode="decimal" value="100"')
+        self.assertContains(response, 'name="in_stock" value="1" checked')
+
+    def test_load_more(self):
+        for i in range(12):
+            self.new_product(f"extra{i}").variants.create(weight=Decimal("2"))
+        first = self.client.get(reverse("catalog"), {"sort": "cheap"})
+        self.assertEqual(len(first.context["page"]), 12)
+        self.assertContains(first, 'hx-get="?sort=cheap&amp;page=2"')  # фильтры сохраняются в ссылке
+
+        second = self.client.get(reverse("catalog"), {"sort": "cheap", "page": 2})
+        self.assertEqual(len(second.context["page"]), 3)
+        self.assertNotContains(second, 'id="more"')  # товары кончились: кнопки нет
+
+    def test_htmx_request_gets_only_cards(self):
+        url = reverse("catalog")
+        partial = self.client.get(url, headers={"HX-Request": "true"})
+        self.assertContains(partial, 'class="product-card')
+        self.assertNotContains(partial, "<html")
+        self.assertNotContains(partial, 'id="filters"')
+        # кнопка «Назад» в браузере: HTMX просит страницу целиком
+        full = self.client.get(url, headers={"HX-Request": "true", "HX-History-Restore-Request": "true"})
+        self.assertContains(full, "<html")
+
+    def test_product_page(self):
+        self.costly.description = "Кольцо ручной работы"
+        self.costly.save()
+        stone = Attribute.objects.create(name="Камень")
+        self.costly.attribute_values.add(AttributeValue.objects.create(attribute=stone, value="Фианит"))
+
+        response = self.client.get(reverse("product", args=["costly"]))
+        self.assertContains(response, self.costly.name)
+        self.assertContains(response, str(self.costly.sku))
+        # тысячи разделяет неразрывный пробел (\xa0), как принято в русском
+        self.assertContains(response, '<span id="price">15\xa0000</span>')  # первый размер в наличии
+        self.assertContains(response, 'data-price="20\xa0000" data-stock="0"')  # второй: цена и «нет в наличии»
+        self.assertContains(response, "Кольцо ручной работы")
+        self.assertContains(response, "Фианит")
+        self.assertContains(response, reverse("catalog_category", args=["rings"]))
+
+    def test_sold_out_product_page(self):
+        response = self.client.get(reverse("product", args=["sold-out"]))
+        self.assertContains(response, 'id="stock" >')  # без hidden: надпись «Нет в наличии» видна
+        self.assertEqual(self.client.get(reverse("product", args=[self.new_product("empty").slug])).status_code, 200)  # совсем без вариантов
+
+    def test_list_does_not_query_per_product(self):
+        url = reverse("catalog")
+        self.client.get(url)  # первый запрос создаёт «Настройки сайта» и прогревает кеши
+        with CaptureQueriesContext(connection) as few:
+            self.client.get(url)
+        for i in range(8):
+            self.new_product(f"more{i}").variants.create(weight=Decimal("2"))
+        with CaptureQueriesContext(connection) as many:
+            self.client.get(url)
+        self.assertEqual(len(few), len(many))  # товаров больше, запросов столько же
+
+    def test_header_marks_catalog_on_all_its_pages(self):
+        for url in [reverse("catalog"), reverse("catalog_category", args=["rings"]), reverse("product", args=["cheap"])]:
+            with self.subTest(url):
+                self.assertContains(self.client.get(url), f'class="action" href="{reverse("catalog")}" aria-current="page"', count=1)
 
 
 class CatalogAdminListTests(CatalogData, TestCase):

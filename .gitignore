@@ -35,3 +35,7 @@ db.sqlite3-journal
 .vscode/
 .idea/
 *.swp
+
+# Форматирование
+.djlintrc
+.prettierignore

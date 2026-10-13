@@ -1,0 +1,18 @@
+{% load i18n %}
+<a class="product-card glass" href="{% url 'product' product.slug %}">
+    {% with image=product.images.all.0 %}
+        {% if image %}
+            <img src="{{ image.thumb.url }}" alt="" loading="lazy" width="400" height="400" />
+        {% else %}
+            <div class="product-card__noimage">
+                {% include "icons/logo.svg" %}
+            </div>
+        {% endif %}
+    {% endwith %}
+    <span class="product-card__name">{{ product.name_local }}</span>
+    {% if product.price_from %}
+        <span class="product-card__price">{% trans "от" %} {{ product.price_from|floatformat:"-2g" }} {% trans "сом" %}</span>
+    {% else %}
+        <span class="muted">{% trans "Нет в наличии" %}</span>
+    {% endif %}
+</a>

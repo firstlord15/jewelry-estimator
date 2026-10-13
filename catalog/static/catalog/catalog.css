@@ -1,0 +1,327 @@
+/* ---------- Каталог: заголовок, категории, фильтры слева и сетка карточек ---------- */
+
+.catalog-title {
+  margin: 24px 0 0;
+}
+
+.category-nav {
+  margin-top: -12px;
+}
+
+/* Чип-ссылка текущей категории и чип с отмеченной галочкой или выбранным размером */
+.chip[aria-current="page"],
+.chip:has(input:checked) {
+  color: var(--on-accent);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+/* поле внутри чипа скрыто, поэтому рамку фокуса с клавиатуры рисуем на самом чипе */
+.chip:has(input:focus-visible) {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+
+.chip:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.catalog {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  align-items: start;
+  gap: 20px;
+}
+
+/* ---------- Фильтры ---------- */
+
+.filters {
+  gap: 20px;
+}
+
+.filters__group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.filters__group legend {
+  margin-bottom: 8px;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+/* в узкой колонке фильтров чипы компактнее, чтобы вставали по два-три в ряд */
+.filters .chip {
+  padding: 6px 12px;
+  font-size: 13px;
+}
+
+.filters select {
+  width: 100%;
+  padding: 11px 18px;
+  font: 16px var(--font);
+  color: var(--ink);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+}
+
+.filters__price {
+  display: flex;
+  gap: 8px;
+}
+
+/* общий стиль input растягивает поле на всю ширину: галочке это не нужно */
+.filters__check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.filters__check input {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  accent-color: var(--gold-bright);
+}
+
+.filters__actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* ---------- Сетка и карточка ---------- */
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 20px;
+}
+
+/* сообщение «ничего не найдено» и кнопка «Показать ещё» занимают всю ширину сетки */
+.product-grid__empty,
+.product-grid__more {
+  grid-column: 1 / -1;
+}
+
+.product-grid__more {
+  display: flex;
+  justify-content: center;
+  padding-top: 8px;
+}
+
+.product-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 22px;
+}
+
+.product-card img,
+.product-card__noimage {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 14px;
+}
+
+/* нет фото: логотип по центру приглушённой плашки */
+.product-card__noimage {
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  background: var(--soft);
+}
+
+.product-card__noimage .icon {
+  width: 48px;
+  height: 48px;
+}
+
+.product-card__price {
+  font-weight: 600;
+  color: var(--gold-bright);
+  font-variant-numeric: tabular-nums;
+}
+
+/* пока идёт запрос HTMX, старые карточки остаются на месте приглушёнными: страница не прыгает */
+.htmx-request .product-card,
+.htmx-request.product-grid__more {
+  opacity: 0.5;
+  transition: opacity 0.15s;
+}
+
+@media (hover: hover) {
+  .product-card:hover {
+    border-color: var(--glass-hover-border);
+  }
+
+  .breadcrumbs a:hover {
+    color: var(--gold-bright);
+  }
+}
+
+/* ---------- Страница товара ---------- */
+
+.breadcrumbs {
+  display: flex;
+  gap: 8px;
+  margin-top: 24px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.breadcrumbs a {
+  color: var(--muted);
+}
+
+.product {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 32px;
+}
+
+.product__gallery,
+.product__info {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.product__photo {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  object-fit: contain;
+  background: var(--soft);
+  border-radius: 22px;
+}
+
+.product__thumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.product__thumb {
+  width: 72px;
+  height: 72px;
+  padding: 0;
+  overflow: hidden;
+  background: none;
+  border: 2px solid transparent;
+  border-radius: 14px;
+  cursor: pointer;
+}
+
+.product__thumb[aria-current="true"] {
+  border-color: var(--gold-bright);
+}
+
+.product__thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.product__name {
+  font-size: 32px;
+}
+
+.product__price {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 12px;
+  font: 600 32px/1.2 var(--font);
+  font-variant-numeric: tabular-nums;
+  color: var(--gold-bright);
+}
+
+.product__stock {
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.product__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.product__description p + p {
+  margin-top: 8px;
+}
+
+.product__attributes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+}
+
+.product__attributes div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.product__attributes dd {
+  margin: 0;
+  text-align: right;
+}
+
+/* ---------- Адаптивность ---------- */
+
+/* Планшет и телефон: фильтры над сеткой, фото над описанием */
+@media (max-width: 960px) {
+  .catalog,
+  .product {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Телефон: две карточки в ряд */
+@media (max-width: 480px) {
+  .catalog-title {
+    margin-top: 18px;
+    font-size: 28px;
+  }
+
+  .product-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .product-card {
+    padding: 8px;
+    border-radius: 18px;
+  }
+
+  .product__name,
+  .product__price {
+    font-size: 26px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .htmx-request .product-card {
+    transition: none;
+  }
+}

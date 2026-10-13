@@ -3,6 +3,8 @@ from decimal import ROUND_HALF_UP, Decimal
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
+from django.db.models import DecimalField, F, Min, Q
+from django.db.models.functions import Coalesce, Round
 from imagekit.models import ImageSpecField
 from imagekit.processors import ResizeToFill, ResizeToFit
 
@@ -15,6 +17,21 @@ MAX_IMAGE_SIZE_MB = 10
 def validate_image_size(image):
     if image.size > MAX_IMAGE_SIZE_MB * 1024 * 1024:
         raise ValidationError(f"Файл больше {MAX_IMAGE_SIZE_MB} МБ. Уменьшите фото и загрузите снова.")
+
+
+class ProductQuerySet(models.QuerySet):
+    def visible(self):
+        """Только то, что видит покупатель."""
+        return self.filter(is_active=True, category__is_active=True)
+
+    def with_price(self):
+        """Добавляет price_from: цену «от» среди вариантов в наличии, посчитанную в базе."""
+        variant_price = Coalesce(
+            F("variants__custom_price"),
+            Round(F("variants__weight") * F("probe__price_per_gram") + F("surcharge"), 2),
+            output_field=DecimalField(max_digits=14, decimal_places=2),
+        )
+        return self.annotate(price_from=Min(variant_price, filter=Q(variants__in_stock=True)))
 
 
 class Category(AutoOrderMixin, models.Model):
@@ -86,7 +103,6 @@ class Product(models.Model):
 
     sku = models.PositiveIntegerField("Артикул", unique=True, editable=False, null=True)
     category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name="products", verbose_name="Категория")
-    
     probe = models.ForeignKey(
         "rates.Probe", on_delete=models.PROTECT, related_name="products", verbose_name="Проба",
         help_text="От пробы зависят металл и цена за грамм",
@@ -119,6 +135,8 @@ class Product(models.Model):
 
     name_local = Localized("name")
     description_local = Localized("description")
+
+    objects = ProductQuerySet.as_manager()  # Product.objects.visible().with_price()
 
     class Meta:
         ordering = ["-created_at"]

@@ -55,7 +55,7 @@ class PagesTests(TestCase):
         for name in ["catalog", "favorites", "cart", "calculator"]:
             with self.subTest(name):
                 response = self.client.get(reverse(name))
-                self.assertContains(response, f'href="{reverse(name)}" aria-current="page"', count=1)
+                self.assertContains(response, f'class="action" href="{reverse(name)}" aria-current="page"', count=1)
         # страницы не из шапки: точки нет
         self.assertNotContains(self.client.get(reverse("about")), 'aria-current="page"')
 

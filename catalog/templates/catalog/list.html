@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% load static i18n %}
+{% block title %}
+    {% if category %}{{ category.name_local }}{% else %}{% trans "Каталог" %}{% endif %} — {{ SITE_NAME }}
+{% endblock %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'catalog/catalog.css' %}" />
+{% endblock %}
+{% block content %}
+    <h1 class="catalog-title">
+        {% if category %}{{ category.name_local }}{% else %}{% trans "Каталог" %}{% endif %}
+    </h1>
+    {# Категории: текущая подсвечена. Выбранные фильтры при переходе сбрасываются #}
+    <nav class="chips category-nav" aria-label="{% trans 'Категории' %}">
+        <a class="chip" href="{% url 'catalog' %}" {% if not category %}aria-current="page"{% endif %}>{% trans "Все" %}</a>
+        {% for item in categories %}
+            <a class="chip" href="{% url 'catalog_category' item.slug %}" {% if item == category %}aria-current="page"{% endif %}>{{ item.name_local }}</a>
+        {% endfor %}
+    </nav>
+    <div class="catalog">
+        {# Фильтры: обычная GET-форма. С HTMX сетка обновляется без перезагрузки, без него форма отправляется как есть #}
+        <form class="filters panel glass" id="filters" method="get" hx-get="{{ request.path }}" hx-target="#grid" hx-trigger="change, submit" hx-push-url="true" hx-indicator="#grid">
+            <label class="field">
+                <span>{% trans "Сортировка" %}</span>
+                <select name="sort">
+                    <option value="new" {% if request.GET.sort == "new" %}selected{% endif %}>{% trans "Сначала новые" %}</option>
+                    <option value="cheap" {% if request.GET.sort == "cheap" %}selected{% endif %}>{% trans "Сначала дешевле" %}</option>
+                    <option value="expensive" {% if request.GET.sort == "expensive" %}selected{% endif %}>{% trans "Сначала дороже" %}</option>
+                </select>
+            </label>
+            <fieldset class="filters__group">
+                <legend>{% trans "Проба" %}</legend>
+                <div class="chips">
+                    {% for probe in probes %}
+                        <label class="chip" data-metal="{{ probe.metal }}">
+                            <input class="visually-hidden" type="checkbox" name="probe" value="{{ probe.pk }}" {% if probe.pk|stringformat:"s" in selected_probes %}checked{% endif %} />
+                            {{ probe }}
+                        </label>
+                    {% endfor %}
+                </div>
+            </fieldset>
+            {% for attribute in attributes %}
+                {% if attribute.values.all %}
+                    <fieldset class="filters__group">
+                        <legend>{{ attribute.name_local }}</legend>
+                        <div class="chips">
+                            {% for value in attribute.values.all %}
+                                <label class="chip">
+                                    <input class="visually-hidden" type="checkbox" name="value" value="{{ value.pk }}" {% if value.pk|stringformat:"s" in selected_values %}checked{% endif %} />
+                                    {{ value.value_local }}
+                                </label>
+                            {% endfor %}
+                        </div>
+                    </fieldset>
+                {% endif %}
+            {% endfor %}
+            <fieldset class="filters__group">
+                <legend>{% trans "Цена, сом" %}</legend>
+                <div class="filters__price">
+                    <input name="price_min" inputmode="decimal" value="{{ request.GET.price_min }}" placeholder="{% trans 'от' %}" aria-label="{% trans 'Цена от' %}" />
+                    <input name="price_max" inputmode="decimal" value="{{ request.GET.price_max }}" placeholder="{% trans 'до' %}" aria-label="{% trans 'Цена до' %}" />
+                </div>
+            </fieldset>
+            <label class="filters__check">
+                <input type="checkbox" name="in_stock" value="1" {% if request.GET.in_stock %}checked{% endif %} />
+                {% trans "Только в наличии" %}
+            </label>
+            <div class="filters__actions">
+                <button class="chip" type="submit">{% trans "Показать" %}</button>
+                <a class="muted" href="{{ request.path }}">{% trans "Сбросить" %}</a>
+            </div>
+        </form>
+        <div class="product-grid" id="grid">
+            {% include "catalog/_cards.html" %}
+        </div>
+    </div>
+{% endblock %}

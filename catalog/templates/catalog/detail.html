@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% load static i18n %}
+{% block title %}
+    {{ product.name_local }} — {{ SITE_NAME }}
+{% endblock %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'catalog/catalog.css' %}" />
+{% endblock %}
+{% block content %}
+    <nav class="breadcrumbs" aria-label="{% trans 'Вы здесь' %}">
+        <a href="{% url 'catalog' %}">{% trans "Каталог" %}</a>
+        <span aria-hidden="true">/</span>
+        <a href="{% url 'catalog_category' product.category.slug %}">{{ product.category.name_local }}</a>
+    </nav>
+    <article class="product panel glass">
+        {# Слева фото: большое и ряд миниатюр. Нажатие на миниатюру меняет большое фото (catalog.js) #}
+        <div class="product__gallery">
+            {% with images=product.images.all %}
+                {% if images %}
+                    <img class="product__photo" id="gallery-main" src="{{ images.0.large.url }}" alt="{{ product.name_local }}" />
+                    {% if images|length > 1 %}
+                        <div class="product__thumbs">
+                            {% for image in images %}
+                                <button type="button" class="product__thumb" data-large="{{ image.large.url }}" {% if forloop.first %}aria-current="true"{% endif %} aria-label="{% trans 'Фото' %} {{ forloop.counter }}">
+                                    <img src="{{ image.thumb.url }}" alt="" loading="lazy" width="80" height="80" />
+                                </button>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <div class="product__photo product-card__noimage">
+                        {% include "icons/logo.svg" %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+        </div>
+        <div class="product__info">
+            <h1 class="product__name">{{ product.name_local }}</h1>
+            <p class="muted">{% trans "Артикул" %}: {{ product.sku }} · {{ product.probe }}</p>
+            {# Цена и наличие выбранного размера. При смене размера их подставляет catalog.js из data-атрибутов #}
+            <p class="product__price">
+                {% if selected %}
+                    <span id="price">{{ selected.price|floatformat:"-2g" }}</span> {% trans "сом" %}
+                {% endif %}
+                <span class="product__stock muted" id="stock" {% if selected.in_stock %}hidden{% endif %}>{% trans "Нет в наличии" %}</span>
+            </p>
+            {% if variants|length > 1 %}
+                <fieldset class="filters__group">
+                    <legend>{% trans "Размер" %}</legend>
+                    <div class="chips">
+                        {% for variant in variants %}
+                            <label class="chip">
+                                <input type="radio" name="variant" value="{{ variant.pk }}" class="visually-hidden" data-price="{{ variant.price|floatformat:'-2g' }}" data-stock="{{ variant.in_stock|yesno:'1,0' }}" {% if variant == selected %}checked{% endif %} />
+                                {{ variant.size|default:_("Один размер") }}
+                            </label>
+                        {% endfor %}
+                    </div>
+                </fieldset>
+            {% elif selected.size %}
+                <p>{% trans "Размер" %}: {{ selected.size }}</p>
+            {% endif %}
+            {# Кнопки заработают вместе с избранным и корзиной #}
+            <div class="product__actions">
+                <button class="chip" type="button" disabled>{% trans "В корзину" %}</button>
+                <button class="chip" type="button" disabled>{% trans "В избранное" %}</button>
+            </div>
+            <p class="note">{% trans "Цена ориентировочная, итоговую уточняйте у продавца." %}</p>
+            {% if product.description_local %}
+                <div class="product__description">{{ product.description_local|linebreaks }}</div>
+            {% endif %}
+            {% with values=product.attribute_values.all %}
+                {% if values %}
+                    <dl class="product__attributes">
+                        {% for value in values %}
+                            <div>
+                                <dt class="muted">{{ value.attribute.name_local }}</dt>
+                                <dd>{{ value.value_local }}</dd>
+                            </div>
+                        {% endfor %}
+                    </dl>
+                {% endif %}
+            {% endwith %}
+        </div>
+    </article>
+{% endblock %}
+{% block extra_js %}
+    <script src="{% static 'catalog/catalog.js' %}" defer></script>
+{% endblock %}

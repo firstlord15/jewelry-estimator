@@ -15,6 +15,7 @@ urlpatterns = [
 urlpatterns += i18n_patterns(
     path("", include("core.urls")),
     path("", include("rates.urls")),
+    path("", include("catalog.urls")),
     prefix_default_language=False,
 )
 

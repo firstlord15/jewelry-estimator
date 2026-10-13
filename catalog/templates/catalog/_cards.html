@@ -1,0 +1,13 @@
+{% load i18n %}
+{# Карточки одной страницы и кнопка следующей. Этот же кусок сервер отдаёт на запросы HTMX #}
+{% for product in page %}
+    {% include "catalog/_card.html" %}
+{% empty %}
+    <p class="muted product-grid__empty">{% trans "Ничего не найдено." %}</p>
+{% endfor %}
+{% if page.has_next %}
+    {# Блок с кнопкой заменяется ответом сервера: следующими карточками и новой кнопкой #}
+    <div class="product-grid__more" id="more">
+        <a class="chip" href="{% querystring page=page.next_page_number %}" hx-get="{% querystring page=page.next_page_number %}" hx-target="#more" hx-swap="outerHTML" hx-indicator="#more">{% trans "Показать ещё" %}</a>
+    </div>
+{% endif %}
