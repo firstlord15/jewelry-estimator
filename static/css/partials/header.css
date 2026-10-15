@@ -210,14 +210,15 @@
   display: none;
 }
 
-/* Пункты меню: ссылки профиля и языков выглядят одинаково */
+/* Пункты меню: ссылки профиля, языков и сортировки каталога выглядят одинаково */
 .account-links,
-.lang-form {
+.lang-form,
+.sort-links {
   display: flex;
   flex-direction: column;
 }
 
-:is(.account-links a, .lang-form a) {
+:is(.account-links a, .lang-form a, .sort-links a) {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -232,7 +233,7 @@
   cursor: pointer;
 }
 
-.lang-form a[aria-current="true"] {
+:is(.lang-form, .sort-links) a[aria-current="true"] {
   color: var(--gold-bright);
   font-weight: 600;
 }
@@ -335,7 +336,7 @@
     border-color: var(--glass-hover-border);
   }
 
-  :is(.account-links a, .lang-form a):hover,
+  :is(.account-links a, .lang-form a, .sort-links a):hover,
   .search-close:hover {
     background: var(--glass-hover);
   }

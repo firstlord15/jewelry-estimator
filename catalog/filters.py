@@ -1,6 +1,6 @@
 from decimal import Decimal, InvalidOperation
 
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext as _, gettext_lazy
 from django.db.models import Count, F, Max, Min, Prefetch, Q
 
 from .models import Attribute, AttributeValue, ProductVariant
@@ -12,6 +12,20 @@ SORTS = {
     "expensive": [F("price_from").desc(nulls_last=True)],
 }
 
+SORT_NAMES = {
+    "popular": gettext_lazy("Сначала популярные"),
+    "new": gettext_lazy("Сначала новые"),
+    "cheap": gettext_lazy("Сначала дешевле"),
+    "expensive": gettext_lazy("Сначала дороже"),
+}
+
+# Короткие названия для кнопки сортировки: полные стоят в открытом меню
+SORT_SHORT_NAMES = {
+    "popular": gettext_lazy("Популярные"),
+    "new": gettext_lazy("Новинки"),
+    "cheap": gettext_lazy("Дешевле"),
+    "expensive": gettext_lazy("Дороже"),
+}
 
 def to_decimal(text):
     try:

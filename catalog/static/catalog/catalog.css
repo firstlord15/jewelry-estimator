@@ -1,11 +1,93 @@
 /* ---------- Каталог: заголовок, категории, фильтры слева и сетка карточек ---------- */
 
 .catalog-title {
-  margin: 24px 0 0;
+  margin: 0;
 }
 
+/* Число товаров рядом с заголовком: мелко и серым, как подпись */
+.catalog-count {
+  margin-left: 8px;
+  font: 400 16px var(--font);
+  white-space: nowrap;
+}
+
+/* Постер категории: показывается целиком, на телефоне просто уменьшается.
+   Пропорция как у banner_wide (1600×500): место резервируется заранее, страница не прыгает */
+.category-banner {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 5;
+  margin-top: 24px;
+  object-fit: cover;
+  border-radius: 22px;
+}
+
+/* Компьютер: заголовок слева, сортировка справа, ниже ряд категорий на всю ширину */
+.catalog-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 20px 16px;
+  margin-top: 24px;
+}
+
+/* ряд категорий при нехватке места листается вбок */
 .category-nav {
-  margin-top: -12px;
+  grid-column: 1 / -1;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.category-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.category-nav .chip {
+  flex-shrink: 0;
+}
+
+.sort .dropdown-btn {
+  transition:
+    color 0.2s,
+    background-color 0.2s,
+    border-color 0.2s;
+}
+
+/* Сортировка не по умолчанию: кнопка залита, как выбранный чип */
+.sort .dropdown-btn.is-changed {
+  color: var(--on-accent);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+/* обёртка #reset не участвует в раскладке: кнопка встаёт в ряд, как обычный чип, а пустая не даёт лишнего отступа */
+.reset-slot {
+  display: contents;
+}
+
+/* «Сбросить»: появляется первым в ряду, когда выбран хоть один фильтр или категория */
+.chip--reset {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chip--reset .icon {
+  width: 14px;
+  height: 14px;
+}
+
+/* число выбранных фильтров */
+.chip__count {
+  color: var(--gold-bright);
+  font-variant-numeric: tabular-nums;
+}
+
+/* «Сначала популярные» не переносится на две строки: меню становится шире */
+.sort-links a {
+  white-space: nowrap;
 }
 
 /* Чип-ссылка текущей категории и чип с отмеченной галочкой или выбранным размером */
@@ -168,6 +250,15 @@
     border-color: var(--glass-hover-border);
   }
 
+  .sort .dropdown-btn:hover {
+    background: var(--glass-hover);
+  }
+
+  .sort .dropdown-btn.is-changed:hover {
+    background: var(--silver-bright);
+    border-color: var(--silver-bright);
+  }
+
   .breadcrumbs a:hover {
     color: var(--gold-bright);
   }
@@ -300,8 +391,43 @@
 /* Телефон: две карточки в ряд */
 @media (max-width: 480px) {
   .catalog-title {
-    margin-top: 18px;
     font-size: 28px;
+  }
+
+  .catalog-count {
+    font-size: 14px;
+  }
+
+  /* Заголовок сверху, ниже один ряд: значок сортировки и категории */
+  .catalog-head {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 16px 8px;
+    margin-top: 18px;
+  }
+
+  .catalog-title {
+    grid-column: 1 / -1;
+  }
+
+  .category-nav {
+    grid-column: 2;
+  }
+
+  /* Сортировка: круглая кнопка только со значком, название остаётся в aria-label */
+  .sort .dropdown-btn {
+    justify-content: center;
+    width: 40px;
+    padding: 0;
+  }
+
+  .sort__name {
+    display: none;
+  }
+
+  /* кнопка у левого края: меню открывается вправо от неё, а не за край экрана */
+  .sort .dropdown-menu {
+    right: auto;
+    left: 0;
   }
 
   .product-grid {
@@ -318,10 +444,16 @@
   .product__price {
     font-size: 26px;
   }
+
+  .category-banner {
+    margin-top: 18px;
+    border-radius: 18px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .htmx-request .product-card {
+  .htmx-request .product-card,
+  .sort .dropdown-btn {
     transition: none;
   }
 }

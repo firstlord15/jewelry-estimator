@@ -7,27 +7,43 @@
     <link rel="stylesheet" href="{% static 'catalog/catalog.css' %}" />
 {% endblock %}
 {% block content %}
-    <h1 class="catalog-title">
-        {% if category %}{{ category.name_local }}{% else %}{% trans "Каталог" %}{% endif %}
-    </h1>
-    {# Категории: текущая подсвечена. Выбранные фильтры при переходе сбрасываются #}
-    <nav class="chips category-nav" aria-label="{% trans 'Категории' %}">
-        <a class="chip" href="{% url 'catalog' %}" {% if not category %}aria-current="page"{% endif %}>{% trans "Все" %}</a>
-        {% for item in categories %}
-            <a class="chip" href="{% url 'catalog_category' item.slug %}" {% if item == category %}aria-current="page"{% endif %}>{{ item.name_local }}</a>
-        {% endfor %}
-    </nav>
+    {# Постер только у категории с загруженным фото. Текст нарисован на самом постере, alt повторяет его для поиска и экранных чтецов #}
+    {% if category.banner %}
+        <img class="category-banner" src="{{ category.banner_wide.url }}" alt="{{ category.name_local }}" />
+    {% endif %}
+    {# Компьютер: заголовок и сортировка в одной строке, ниже категории. Телефон: сортировка — значок в начале ряда категорий #}
+    <div class="catalog-head">
+        <h1 class="catalog-title">
+            {% if category %}{{ category.name_local }}{% else %}{% trans "Каталог" %}{% endif %}
+            <span class="catalog-count muted" id="count">{% blocktrans count counter=total %}{{ counter }} товар{% plural %}{{ counter }} товаров{% endblocktrans %}</span>
+        </h1>
+        <div class="dropdown sort">
+            {# На кнопке короткое название, в меню полные. Не по умолчанию кнопка залита: видно, что порядок изменён #}
+            <button class="dropdown-btn{% if sort != 'popular' %} is-changed{% endif %}" type="button" data-toggle="sort-menu" aria-expanded="false" aria-haspopup="true" aria-label="{% trans 'Сортировка' %}: {{ sort_name }}">
+                {% include "icons/sort.svg" %}
+                <span class="sort__name">{{ sort_short_name }}</span>
+            </button>
+            {# Обычные ссылки, без HTMX: страница перезагружается, и название на кнопке и скрытое поле формы обновляются #}
+            <div class="dropdown-menu" id="sort-menu">
+                <nav class="sort-links" aria-label="{% trans 'Сортировка' %}">
+                    {% for key, name in sorts %}
+                        <a href="{% querystring sort=key page=None %}"{% if key == sort %} aria-current="true"{% endif %}>{{ name }}</a>
+                    {% endfor %}
+                </nav>
+            </div>
+        </div>
+        {# Категории: текущая подсвечена. Выбранные фильтры при переходе сбрасываются. «Сбросить» только когда что-то выбрано #}
+        <nav class="chips category-nav" aria-label="{% trans 'Категории' %}">
+            {% include "catalog/_reset.html" %}
+            {% for item in categories %}
+                <a class="chip" href="{% url 'catalog_category' item.slug %}" {% if item == category %}aria-current="page"{% endif %}>{{ item.name_local }}</a>
+            {% endfor %}
+        </nav>
+    </div>
     <div class="catalog">
         {# Фильтры: обычная GET-форма. С HTMX сетка обновляется без перезагрузки, без него форма отправляется как есть #}
         <form class="filters panel glass" id="filters" method="get" hx-get="{{ request.path }}" hx-target="#grid" hx-trigger="change, submit" hx-push-url="true" hx-indicator="#grid">
-            <label class="field">
-                <span>{% trans "Сортировка" %}</span>
-                <select name="sort">
-                    <option value="new" {% if request.GET.sort == "new" %}selected{% endif %}>{% trans "Сначала новые" %}</option>
-                    <option value="cheap" {% if request.GET.sort == "cheap" %}selected{% endif %}>{% trans "Сначала дешевле" %}</option>
-                    <option value="expensive" {% if request.GET.sort == "expensive" %}selected{% endif %}>{% trans "Сначала дороже" %}</option>
-                </select>
-            </label>
+            <input type="hidden" name="sort" value="{{ sort }}" />
             <fieldset class="filters__group">
                 <legend>{% trans "Проба" %}</legend>
                 <div class="chips">
