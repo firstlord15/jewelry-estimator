@@ -36,6 +36,9 @@ db.sqlite3-journal
 .idea/
 *.swp
 
+# docs
+docs/
+
 # Форматирование
 .djlintrc
 .prettierignore
