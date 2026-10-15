@@ -1,0 +1,17 @@
+{% load i18n %}
+{# «Сбросить» и выбранные фильтры в начале ряда. Обёртка есть всегда, даже пустая: в неё HTMX кладёт новые чипы после смены фильтра #}
+<span class="chips-slot" id="selected"{% if oob %} hx-swap-oob="true"{% endif %}>
+    {% if reset_count %}
+        <a class="chip chip--reset" href="{{ reset_url }}">
+            {% include "icons/close.svg" %}
+            {% trans "Сбросить" %}
+            <span class="chip__count">{{ reset_count }}</span>
+        </a>
+    {% endif %}
+    {% for item in active %}
+        <a class="chip chip--active" href="{{ item.url }}" aria-label="{% blocktrans with name=item.label %}Убрать фильтр «{{ name }}»{% endblocktrans %}">
+            {{ item.label }}
+            {% include "icons/close.svg" %}
+        </a>
+    {% endfor %}
+</span>

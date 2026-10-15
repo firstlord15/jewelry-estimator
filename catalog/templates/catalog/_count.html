@@ -1,0 +1,2 @@
+{% load i18n %}
+<span class="catalog-count muted" id="count"{% if oob %} hx-swap-oob="true"{% endif %}>{% blocktrans count counter=total %}{{ counter }} товар{% plural %}{{ counter }} товаров{% endblocktrans %}</span>

@@ -5,7 +5,7 @@ from django.urls import reverse
 from rates.models import Probe
 
 from .models import Category, Product
-from .filters import active_filters, apply_filters, attribute_groups, counted, price_bounds, size_options
+from .filters import active_filters, apply_filters, attribute_groups, counted, price_bounds, size_options, quick_filters
 from .filters import SORT_NAMES, SORT_SHORT_NAMES, SORTS
 
 PAGE_SIZE = 12
@@ -48,9 +48,10 @@ def product_list(request, category_slug=None):
         # «Сбросить»: категория тоже считается выбранным фильтром, сортировка — нет и сохраняется
         "reset_count": len(active) + (1 if category else 0),
         "reset_url": reverse("catalog") + (f"?sort={sort}" if sort != "popular" else ""),
+        "quick": quick_filters(request.GET, groups),
     }
 
-    # Смена фильтра: карточки и попутно новая кнопка «Сбросить»
+    # Смена фильтра: карточки и попутно число товаров и чипы ряда
     if is_htmx:
         return render(request, "catalog/_results.html", context)
 

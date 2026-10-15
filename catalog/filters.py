@@ -97,6 +97,23 @@ def price_bounds(base):
         return None
     return {"low": int(bounds["low"] // 100 * 100), "high": int(-(-bounds["high"] // 100) * 100)}
 
+def with_value(params, key, value):
+    """Адрес текущей страницы с ещё одним значением фильтра."""
+    query = params.copy()
+    query.appendlist(key, str(value))
+    query.pop("page", None)
+    return "?" + query.urlencode()
+
+def quick_filters(params, groups):
+    """Быстрые фильтры («Бриллиант»), которые ещё не выбраны: название и адрес с этим фильтром."""
+    chosen = params.getlist("value")
+    return [
+        {"label": value.value_local, "url": with_value(params, "value", value.pk)}
+        for group in groups
+        for value in group.values.all()
+        if value.is_quick and str(value.pk) not in chosen
+    ]
+
 def without(params, key, value=None):
     """Адрес текущей страницы без одного значения фильтра. Без value убирает параметр целиком."""
     query = params.copy()

@@ -1,3 +1,5 @@
-{# Ответ на смену фильтра: карточки в #grid и попутно новая кнопка «Сбросить» на её место в ряду #}
+{# Ответ на смену фильтра: карточки в #grid и попутно (hx-swap-oob) число товаров и чипы ряда на их места #}
 {% include "catalog/_cards.html" %}
-{% include "catalog/_reset.html" with oob=True %}
+{% include "catalog/_count.html" with oob=True %}
+{% include "catalog/_selected.html" with oob=True %}
+{% include "catalog/_quick.html" with oob=True %}

@@ -1,0 +1,6 @@
+{# Быстрые фильтры в конце ряда: ещё не выбранные значения с галочкой «Быстрый фильтр». HTMX обновляет их вместе с карточками #}
+<span class="chips-slot" id="quick"{% if oob %} hx-swap-oob="true"{% endif %}>
+    {% for item in quick %}
+        <a class="chip" href="{{ item.url }}">{{ item.label }}</a>
+    {% endfor %}
+</span>

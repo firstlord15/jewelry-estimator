@@ -11,11 +11,11 @@
     {% if category.banner %}
         <img class="category-banner" src="{{ category.banner_wide.url }}" alt="{{ category.name_local }}" />
     {% endif %}
-    {# Компьютер: заголовок и сортировка в одной строке, ниже категории. Телефон: сортировка — значок в начале ряда категорий #}
+    {# Компьютер: заголовок и сортировка в одной строке, ниже ряд чипов. Телефон: сортировка — значок в начале ряда #}
     <div class="catalog-head">
         <h1 class="catalog-title">
             {% if category %}{{ category.name_local }}{% else %}{% trans "Каталог" %}{% endif %}
-            <span class="catalog-count muted" id="count">{% blocktrans count counter=total %}{{ counter }} товар{% plural %}{{ counter }} товаров{% endblocktrans %}</span>
+            {% include "catalog/_count.html" %}
         </h1>
         <div class="dropdown sort">
             {# На кнопке короткое название, в меню полные. Не по умолчанию кнопка залита: видно, что порядок изменён #}
@@ -32,13 +32,17 @@
                 </nav>
             </div>
         </div>
-        {# Категории: текущая подсвечена. Выбранные фильтры при переходе сбрасываются. «Сбросить» только когда что-то выбрано #}
-        <nav class="chips category-nav" aria-label="{% trans 'Категории' %}">
-            {% include "catalog/_reset.html" %}
-            {% for item in categories %}
-                <a class="chip" href="{% url 'catalog_category' item.slug %}" {% if item == category %}aria-current="page"{% endif %}>{{ item.name_local }}</a>
-            {% endfor %}
-        </nav>
+        {# Ряд над товарами: сброс, выбранные фильтры, категории, быстрые фильтры. На узком экране листается вбок #}
+        <div class="catalog-chips">
+            {% include "catalog/_selected.html" %}
+            {# Категории: текущая подсвечена. Выбранные фильтры при переходе сбрасываются #}
+            <nav class="category-nav" aria-label="{% trans 'Категории' %}">
+                {% for item in categories %}
+                    <a class="chip" href="{% url 'catalog_category' item.slug %}" {% if item == category %}aria-current="page"{% endif %}>{{ item.name_local }}</a>
+                {% endfor %}
+            </nav>
+            {% include "catalog/_quick.html" %}
+        </div>
     </div>
     <div class="catalog">
         {# Фильтры: обычная GET-форма. С HTMX сетка обновляется без перезагрузки, без него форма отправляется как есть #}
