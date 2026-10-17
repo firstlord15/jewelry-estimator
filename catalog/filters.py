@@ -3,7 +3,9 @@ from decimal import Decimal, InvalidOperation
 from django.utils.translation import gettext as _, gettext_lazy
 from django.db.models import Count, F, Max, Min, Prefetch, Q
 
-from .models import Attribute, AttributeValue, ProductVariant
+from rates.models import Probe
+
+from .models import Attribute, AttributeValue, Category, ProductVariant
 
 SORTS = {
     "popular": ["-views", "-created_at"],
@@ -82,6 +84,37 @@ def attribute_groups(base):
         Prefetch("values", queryset=counted(AttributeValue.objects.all(), base))
     )
     return [attribute for attribute in attributes if attribute.values.all()]
+
+
+def facet_counts(base, params, categories, probes, groups):
+    """Пересчитывает count у галочек панели под выбранные фильтры, как на маркетплейсах.
+
+    Галочки своей группы при этом не учитываются: внутри группы они складываются через «или»,
+    и число показывает, сколько товаров найдётся, если отметить ещё и это значение.
+    Отмечены «Кольца»: у «Цепочек» остаётся 6, а у пробы 585 — только кольца этой пробы.
+    Один запрос на группу, а не на каждое значение.
+    """
+
+    def found(key, drop=None):
+        """Товары по всем выбранным фильтрам, кроме галочек группы key (или только значений drop)."""
+        query = params.copy()
+        query.setlist(key, [] if drop is None else [v for v in query.getlist(key) if v not in drop])
+        return apply_filters(base, query).values("pk")
+
+    def recount(items, model, key, drop=None):
+        numbers = dict(
+            model.objects.filter(pk__in=[item.pk for item in items])
+            .annotate(n=Count("products", filter=Q(products__in=found(key, drop)), distinct=True))
+            .values_list("pk", "n")
+        )
+        for item in items:
+            item.count = numbers.get(item.pk, 0)
+
+    recount(categories, Category, "category")
+    recount(probes, Probe, "probe")
+    for group in groups:  # у характеристик своя группа — значения одной характеристики, а не весь параметр value
+        values = list(group.values.all())
+        recount(values, AttributeValue, "value", drop={str(value.pk) for value in values})
 
 
 def size_options(base):

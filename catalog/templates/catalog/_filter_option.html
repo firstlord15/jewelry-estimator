@@ -1,0 +1,6 @@
+{# Строка группы фильтра: галочка, название, число товаров. selected — список отмеченных значений из адреса #}
+<label class="filter-option">
+    <input type="checkbox" name="{{ name }}" value="{{ value }}"{% if value|stringformat:"s" in selected %} checked{% endif %} />
+    <span class="filter-option__name">{{ label }}</span>
+    {% include "catalog/_facet_count.html" %}
+</label>

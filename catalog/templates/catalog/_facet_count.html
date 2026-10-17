@@ -1,0 +1,2 @@
+{# Число товаров у галочки панели. id нужен HTMX: после смены фильтра новое число встаёт на место старого (oob). Ноль — строка приглушена #}
+<span class="filter-option__count{% if not count %} is-zero{% endif %}" id="facet-{{ name }}-{{ value }}"{% if oob %} hx-swap-oob="true"{% endif %}>{{ count }}</span>

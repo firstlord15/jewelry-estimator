@@ -138,28 +138,59 @@
   gap: 20px;
 }
 
+/* ---------- Switches ---------- */
+/* Наличие: галочка в виде переключателя, подпись слева */
+.switch {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.switch input {
+  appearance: none;
+  position: relative;
+  flex-shrink: 0;
+  width: 44px;
+  height: 24px;
+  margin: 0;
+  background: var(--soft);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.switch input::after {
+  content: "";
+  position: absolute;
+  top: 1.5px;
+  left: 4px;
+  width: 18px;
+  height: 18px;
+  background: var(--ink);
+  border-radius: 50%;
+  transition: translate 0.15s;
+}
+
+.switch input:checked {
+  background: var(--gold-bright);
+}
+
+.switch input:checked::after {
+  translate: 18px 0;
+}
+
+.switch input:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
 /* ---------- Фильтры ---------- */
 
 .filters {
   gap: 20px;
-}
-
-.filters__group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  min-width: 0;
-  margin: 0;
-  padding: 0;
-  border: 0;
-}
-
-.filters__group legend {
-  margin-bottom: 8px;
-  padding: 0;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--muted);
 }
 
 /* в узкой колонке фильтров чипы компактнее, чтобы вставали по два-три в ряд */
@@ -168,34 +199,101 @@
   font-size: 13px;
 }
 
-.filters select {
-  width: 100%;
-  padding: 11px 18px;
-  font: 16px var(--font);
-  color: var(--ink);
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: 999px;
+/* Группа фильтра: заголовок со стрелкой сворачивает список */
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 14px;
+  border-top: 1px solid var(--glass-border);
+}
+
+.filter-group > summary,
+.filter-more > summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+/* Safari рисует свой треугольник через этот псевдоэлемент, list-style его не убирает */
+.filter-group > summary::-webkit-details-marker,
+.filter-more > summary::-webkit-details-marker {
+  display: none;
+}
+
+.filter-group > summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+/* Стрелка справа: тот же рисунок, что icons/chevron.svg в шапке. Маска красит его цветом текста (currentColor).
+   Закрыта — вниз, открыта — вверх */
+.filter-group > summary::after {
+  content: "";
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  color: var(--muted);
+  background: currentColor;
+  -webkit-mask: var(--chevron) center / contain no-repeat;
+  mask: var(--chevron) center / contain no-repeat;
+  transition: rotate 0.15s;
+  --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+}
+
+.filter-group[open] > summary::after {
+  rotate: 180deg;
+}
+
+/* Строка: галочка, название, число товаров справа */
+.filter-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 0;
+  cursor: pointer;
+}
+
+.filter-option input {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--gold-bright);
+}
+
+.filter-option__name {
+  flex: 1;
+}
+
+.filter-option__count {
+  color: var(--muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* С выбранными фильтрами у значения 0 товаров: строка остаётся на месте, но приглушена.
+   Отмеченную не глушим — её снимают, чтобы вернуть товары */
+.filter-option:has(.is-zero):not(:has(input:checked)) {
+  opacity: 0.45;
+}
+
+.filter-more > summary {
+  padding: 5px 0;
+  color: var(--gold-bright);
+  font-size: 14px;
+}
+
+.filter-more[open] > summary {
+  display: none; /* раскрыли — подпись больше не нужна */
 }
 
 .filters__price {
   display: flex;
   gap: 8px;
-}
-
-/* общий стиль input растягивает поле на всю ширину: галочке это не нужно */
-.filters__check {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
-}
-
-.filters__check input {
-  width: 18px;
-  height: 18px;
-  padding: 0;
-  accent-color: var(--gold-bright);
 }
 
 .filters__actions {
@@ -205,7 +303,6 @@
 }
 
 /* ---------- Сетка и карточка ---------- */
-
 .product-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -270,10 +367,6 @@
 @media (hover: hover) {
   .product-card:hover {
     border-color: var(--glass-hover-border);
-  }
-
-  .sort .dropdown-btn:hover {
-    background: var(--glass-hover);
   }
 
   .sort .dropdown-btn.is-changed:hover {
@@ -475,7 +568,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .htmx-request .product-card,
-  .sort .dropdown-btn {
+  .sort .dropdown-btn,
+  .filter-group > summary::after {
     transition: none;
   }
 }

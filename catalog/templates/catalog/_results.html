@@ -1,5 +1,6 @@
-{# Ответ на смену фильтра: карточки в #grid и попутно (hx-swap-oob) число товаров и чипы ряда на их места #}
+{# Ответ на смену фильтра: карточки в #grid и попутно (hx-swap-oob) число товаров, чипы ряда и числа у галочек панели #}
 {% include "catalog/_cards.html" %}
 {% include "catalog/_count.html" with oob=True %}
 {% include "catalog/_selected.html" with oob=True %}
 {% include "catalog/_quick.html" with oob=True %}
+{% include "catalog/_facets.html" %}

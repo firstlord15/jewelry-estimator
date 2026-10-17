@@ -5,7 +5,7 @@ from django.urls import reverse
 from rates.models import Probe
 
 from .models import Category, Product
-from .filters import active_filters, apply_filters, attribute_groups, counted, price_bounds, size_options, quick_filters
+from .filters import active_filters, apply_filters, attribute_groups, counted, facet_counts, price_bounds, quick_filters, size_options
 from .filters import SORT_NAMES, SORT_SHORT_NAMES, SORTS
 
 PAGE_SIZE = 12
@@ -39,8 +39,11 @@ def product_list(request, category_slug=None):
     if is_htmx and request.GET.get("page"):  # «Показать ещё»: только следующие карточки, фильтры не менялись
         return render(request, "catalog/_cards.html", context)
 
-    probes = counted(Probe.objects.filter(is_active=True), base)
+    # Списки галочек панели — по всей странице, а числа у них — под выбранные фильтры
+    category_counts = list(counted(categories, base))
+    probes = list(counted(Probe.objects.filter(is_active=True), base))
     groups = attribute_groups(base)
+    facet_counts(base, request.GET, category_counts, probes, groups)
     sort = request.GET.get("sort") if request.GET.get("sort") in SORTS else "popular"
     active = active_filters(request.GET, categories, probes, groups)
     context |= {
@@ -49,21 +52,23 @@ def product_list(request, category_slug=None):
         "reset_count": len(active) + (1 if category else 0),
         "reset_url": reverse("catalog") + (f"?sort={sort}" if sort != "popular" else ""),
         "quick": quick_filters(request.GET, groups),
+        "category_counts": category_counts,
+        "probes": probes,
+        "groups": groups,
     }
 
-    # Смена фильтра: карточки и попутно число товаров и чипы ряда
+    # Смена фильтра: карточки и попутно число товаров, чипы ряда и числа у галочек панели
     if is_htmx:
         return render(request, "catalog/_results.html", context)
 
     context |= {
         "categories": categories,
-        "category_counts": counted(categories, base),
-        "probes": probes,
-        "groups": groups,
         "sizes": size_options(base),
         "bounds": price_bounds(base),
         "selected_probes": request.GET.getlist("probe"),
         "selected_values": request.GET.getlist("value"),
+        "selected_categories": request.GET.getlist("category"),
+        "selected_sizes": request.GET.getlist("size"),
         "sort": sort,
         "sort_name": SORT_NAMES[sort],
         "sort_short_name": SORT_SHORT_NAMES[sort],

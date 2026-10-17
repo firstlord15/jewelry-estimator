@@ -399,12 +399,18 @@ input {
 
 /* Hover только там, где есть мышь: на тачскринах он «залипает» */
 @media (hover: hover) {
-  .segment:not([aria-pressed="true"]):hover,
-  .chip:not([aria-pressed="true"]):hover {
+  .segment:not([aria-pressed="true"]):hover {
     background: var(--accent);
     border: 1px solid var(--accent);
     color: var(--on-accent);
     transition: 0.2s;
+  }
+  .dropdown-btn:not([aria-pressed="true"]):hover,
+  .chip:not([aria-pressed="true"]):hover {
+    background: var(--glass-hover);
+    border: 1px solid var(--glass-hover-border);
+    transition: 0.2s;
+    color: var(--accent);
   }
 }
 
