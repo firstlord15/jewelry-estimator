@@ -37,23 +37,38 @@ def to_decimal(text):
         return None
 
 
-def apply_filters(products, params):
+# Параметры адреса, которые отбирают товары. sort и page не в счёт
+FILTER_KEYS = ("category", "probe", "value", "size", "price_min", "price_max", "in_stock")
+
+
+def has_filters(params):
+    """Выбран ли хоть один фильтр. Пустые price_min= и price_max= от формы не считаются."""
+    return any(params.get(key) for key in FILTER_KEYS)
+
+
+def value_attributes(params):
+    """К какой характеристике относится каждое выбранное значение: {"16": 8}. Один запрос, без значений — ни одного."""
+    ids = [v for v in params.getlist("value") if v.isdigit()]
+    return {str(pk): attribute for pk, attribute in AttributeValue.objects.filter(pk__in=ids).values_list("pk", "attribute_id")}
+
+
+def apply_filters(products, params, attributes=None):
+    """Товары по фильтрам из адреса. attributes — готовый ответ value_attributes, чтобы не спрашивать базу повторно."""
     slugs = params.getlist("category")
     if slugs:
         products = products.filter(category__slug__in=slugs)
-
-    if params.get("metal") in ("gold", "silver"):
-        products = products.filter(probe__metal=params["metal"])
 
     probe_ids = [p for p in params.getlist("probe") if p.isdigit()]
     if probe_ids:
         products = products.filter(probe_id__in=probe_ids)
 
     # характеристики: внутри одной «или» (фианит или бриллиант), между разными «и» (камень и цвет)
-    value_ids = [v for v in params.getlist("value") if v.isdigit()]
+    if attributes is None:
+        attributes = value_attributes(params)
     by_attribute = {}
-    for value in AttributeValue.objects.filter(pk__in=value_ids):
-        by_attribute.setdefault(value.attribute_id, []).append(value.pk)
+    for value in params.getlist("value"):
+        if value in attributes:
+            by_attribute.setdefault(attributes[value], []).append(value)
     for ids in by_attribute.values():
         products = products.filter(attribute_values__in=ids)
     
@@ -87,20 +102,20 @@ def attribute_groups(base):
     return [attribute for attribute in attributes if attribute.values.all()]
 
 
-def facet_counts(base, params, categories, probes, groups):
+def facet_counts(base, params, categories, probes, groups, attributes):
     """Пересчитывает count у галочек панели под выбранные фильтры, как на маркетплейсах.
 
     Галочки своей группы при этом не учитываются: внутри группы они складываются через «или»,
     и число показывает, сколько товаров найдётся, если отметить ещё и это значение.
     Отмечены «Кольца»: у «Цепочек» остаётся 6, а у пробы 585 — только кольца этой пробы.
-    Один запрос на группу, а не на каждое значение.
+    Один запрос на группу, а не на каждое значение. attributes — ответ value_attributes.
     """
 
     def found(key, drop=None):
         """Товары по всем выбранным фильтрам, кроме галочек группы key (или только значений drop)."""
         query = params.copy()
         query.setlist(key, [] if drop is None else [v for v in query.getlist(key) if v not in drop])
-        return apply_filters(base, query).values("pk")
+        return apply_filters(base, query, attributes).values("pk")
 
     def recount(items, model, key, drop=None):
         numbers = dict(

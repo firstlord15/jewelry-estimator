@@ -6,7 +6,7 @@ from django.urls import reverse
 from rates.models import Probe
 
 from .models import Category, Product
-from .filters import active_filters, apply_filters, attribute_groups, counted, facet_counts, price_bounds, quick_filters, size_options
+from .filters import active_filters, apply_filters, attribute_groups, counted, facet_counts, has_filters, price_bounds, quick_filters, size_options, value_attributes
 from .filters import SORT_NAMES, SORT_SHORT_NAMES, SORTS
 
 PAGE_SIZE = 12
@@ -31,7 +31,8 @@ def product_list(request, category_slug=None):
     base = Product.objects.visible()  # товары страницы до фильтров: по ним считаются числа в панели
     if category:
         base = base.filter(category=category)
-    products = apply_filters(base.select_related("probe").prefetch_related("images"), request.GET)
+    attributes = value_attributes(request.GET)  # один раз на запрос: нужен и для товаров, и для чисел в панели
+    products = apply_filters(base.select_related("probe").prefetch_related("images"), request.GET, attributes)
 
     page = Paginator(products, PAGE_SIZE).get_page(request.GET.get("page"))
     context = {"category": category, "page": page, "total": page.paginator.count}
@@ -41,13 +42,15 @@ def product_list(request, category_slug=None):
     if is_htmx and request.GET.get("page"):  # «Показать ещё»: только следующие карточки, фильтры не менялись
         return render(request, "catalog/_cards.html", context)
 
-    # Списки галочек панели — по всей странице, а числа у них — под выбранные фильтры
+    # Списки галочек панели — по всей странице, а числа у них — под выбранные фильтры.
+    # Ничего не выбрано — числа уже верные (их посчитал counted), пересчёт дал бы те же самые
     category_counts = list(counted(categories, base))
     probes = list(counted(Probe.objects.filter(is_active=True), base))
     groups = attribute_groups(base)
-    facet_counts(base, request.GET, category_counts, probes, groups)
-    sort = request.GET.get("sort") if request.GET.get("sort") in SORTS else "popular"
     active = active_filters(request.GET, categories, probes, groups)
+    if has_filters(request.GET):
+        facet_counts(base, request.GET, category_counts, probes, groups, attributes)
+    sort = request.GET.get("sort") if request.GET.get("sort") in SORTS else "popular"
     context |= {
         "active": active,
         # «Сбросить»: категория тоже считается выбранным фильтром, сортировка — нет и сохраняется
