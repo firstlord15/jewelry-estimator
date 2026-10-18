@@ -326,8 +326,7 @@
 /* ---------- Наведение (только там, где есть мышь) ---------- */
 
 @media (hover: hover) {
-  .action:hover,
-  .lang-btn:hover {
+  .action:hover {
     color: var(--gold-bright);
   }
 
@@ -336,7 +335,8 @@
     border-color: var(--glass-hover-border);
   }
 
-  :is(.account-links a, .lang-form a, .sort-links a):hover,
+  /* у языков подсветки нет: текущий и так выделен золотым */
+  :is(.account-links a, .sort-links a):hover,
   .search-close:hover {
     background: var(--glass-hover);
   }

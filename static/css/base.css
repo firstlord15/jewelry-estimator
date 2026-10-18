@@ -405,7 +405,8 @@ input {
     color: var(--on-accent);
     transition: 0.2s;
   }
-  .dropdown-btn:not([aria-pressed="true"]):hover,
+
+  .dropdown-btn:not(.lang-btn, [aria-pressed="true"]):hover,
   .chip:not([aria-pressed="true"]):hover {
     background: var(--glass-hover);
     border: 1px solid var(--glass-hover-border);

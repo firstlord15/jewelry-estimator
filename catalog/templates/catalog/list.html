@@ -37,8 +37,14 @@
             {% include "catalog/_selected.html" %}
             {# Категории: текущая подсвечена. Выбранные фильтры при переходе сбрасываются #}
             <nav class="category-nav" aria-label="{% trans 'Категории' %}">
+                {# Текущая категория первой: всё выбранное стоит слева, сразу после выбранных фильтров #}
+                {% if category %}
+                    <a class="chip" href="{% url 'catalog_category' category.slug %}" aria-current="page">{{ category.name_local }}</a>
+                {% endif %}
                 {% for item in categories %}
-                    <a class="chip" href="{% url 'catalog_category' item.slug %}" {% if item == category %}aria-current="page"{% endif %}>{{ item.name_local }}</a>
+                    {% if item != category %}
+                        <a class="chip" href="{% url 'catalog_category' item.slug %}">{{ item.name_local }}</a>
+                    {% endif %}
                 {% endfor %}
             </nav>
             {% include "catalog/_quick.html" %}
@@ -107,10 +113,8 @@
                     {% endif %}
                 </details>
             {% endfor %}
-            <div class="filters__actions">
-                <button class="chip" type="submit">{% trans "Показать" %}</button>
-                <a class="muted" href="{{ request.path }}">{% trans "Сбросить" %}</a>
-            </div>
+            {# Невидимая кнопка: Enter в поле цены отправляет форму #}
+            <button class="visually-hidden" type="submit" tabindex="-1">{% trans "Показать" %}</button>
         </form>
         <div class="product-grid" id="grid">
             {% include "catalog/_cards.html" %}

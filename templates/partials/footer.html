@@ -31,19 +31,21 @@
         <a href="{% url 'contacts' %}">{% trans "Контакты" %}</a>
       </nav>
 
-      {% if site_settings.address or site_settings.working_hours or site_settings.email %}
+      {% if site_settings.address or site_settings.email %}
       <address class="footer-col">
         <h3>{% trans "Контакты" %}</h3>
-        {% if site_settings.working_hours %}
-        <span>{{ site_settings.working_hours_local }}</span>
-        {% endif %} {% if site_settings.email %}
+        {% if site_settings.email %}
         <a href="mailto:{{ site_settings.email }}">{{ site_settings.email }}</a>
         {% endif %} {% if site_settings.address %}
         <span>{{ site_settings.address_local }}</span>
         {% endif %}
       </address>
-      {% endif %} {% if site_settings.instagram or site_settings.whatsapp or site_settings.telegram %}
+      {% endif %}
+
+      {# Соцсети и под ними часы работы. Колонка есть, если заполнено хоть одно из двух #}
+      {% if site_settings.instagram or site_settings.whatsapp or site_settings.telegram or site_settings.working_hours %}
       <div class="footer-col">
+        {% if site_settings.instagram or site_settings.whatsapp or site_settings.telegram %}
         <h3>{% trans "Мы в соцсетях" %}</h3>
         <div class="site-footer__social">
           {% if site_settings.instagram %}
@@ -54,6 +56,12 @@
           <a class="social" href="{{ site_settings.telegram }}" target="_blank" rel="noopener" aria-label="Telegram">{% include "icons/telegram.svg" %}</a>
           {% endif %}
         </div>
+        {% endif %} {% if site_settings.working_hours %}
+        <div class="footer-block">
+          <h3>{% trans "Часы работы" %}</h3>
+          <span>{{ site_settings.working_hours_local }}</span>
+        </div>
+        {% endif %}
       </div>
       {% endif %}
     </div>

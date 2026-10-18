@@ -296,12 +296,6 @@
   gap: 8px;
 }
 
-.filters__actions {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
 /* ---------- Сетка и карточка ---------- */
 .product-grid {
   display: grid;
