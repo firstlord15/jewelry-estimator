@@ -1,0 +1,2 @@
+{# Число выбранных фильтров на кнопке «Фильтры» (телефон). Пусто — значка нет. HTMX обновляет его вместе с карточками #}
+<span class="filters-open__count" id="filters-count"{% if oob %} hx-swap-oob="true"{% endif %}>{% if active %}{{ active|length }}{% endif %}</span>

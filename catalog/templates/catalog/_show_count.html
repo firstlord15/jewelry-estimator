@@ -1,0 +1,2 @@
+{% load i18n %}
+<span id="show-count"{% if oob %} hx-swap-oob="true"{% endif %}>{% blocktrans count counter=total %}Показать {{ counter }} товар{% plural %}Показать {{ counter }} товаров{% endblocktrans %}</span>

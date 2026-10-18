@@ -84,3 +84,16 @@ document.querySelectorAll("[data-price-range]").forEach((box) => {
     }
     paint();
 });
+
+// Фильтры на телефоне: панель открывается поверх страницы в <dialog>. Esc и затемнение закрывают её сами
+// (Esc — браузер, затемнение — проверка ниже). На компьютере кнопки открытия не видно, и код не срабатывает
+const filtersDialog = document.querySelector("#filters-dialog");
+if (filtersDialog) {
+    document.querySelector("[data-open-filters]")?.addEventListener("click", () => filtersDialog.showModal());
+    filtersDialog.querySelectorAll("[data-close-filters]").forEach((button) => button.addEventListener("click", () => filtersDialog.close()));
+
+    // клик по затемнению: цель — сам <dialog>, а не что-то внутри формы
+    filtersDialog.addEventListener("click", (event) => {
+        if (event.target === filtersDialog) filtersDialog.close();
+    });
+}
