@@ -1,6 +1,6 @@
-{# Строка группы фильтра: галочка, название, число товаров. selected — список отмеченных значений из адреса #}
+{# Строка группы фильтра: галочка, название, число товаров. checked и count ставит view (mark_checked, facet_counts) #}
 <label class="filter-option">
-    <input type="checkbox" name="{{ name }}" value="{{ value }}"{% if value|stringformat:"s" in selected %} checked{% endif %} />
+    <input type="checkbox" name="{{ name }}" value="{{ value }}"{% if checked %} checked{% endif %} />
     <span class="filter-option__name">{{ label }}</span>
     {% include "catalog/_facet_count.html" %}
 </label>

@@ -1,4 +1,5 @@
 from decimal import Decimal, InvalidOperation
+from typing import NamedTuple
 
 from django.db.models import Count, F, Max, Min, Prefetch, Q
 from django.template.defaultfilters import floatformat
@@ -8,27 +9,27 @@ from rates.models import Probe
 
 from .models import Attribute, AttributeValue, Category, ProductVariant
 
+class Sort(NamedTuple):
+    order: list  # для order_by
+    name: str  # полное название: в открытом меню
+    short: str  # короткое: на кнопке
+
+
+# Ключ — значение ?sort= в адресе. Новая сортировка — одна строка здесь, остальное подхватится само
 SORTS = {
-    "popular": ["-views", "-created_at"],
-    "new": ["-created_at"],
-    "cheap": [F("price_from").asc(nulls_last=True)],
-    "expensive": [F("price_from").desc(nulls_last=True)],
+    "popular": Sort(["-views", "-created_at"], gettext_lazy("Сначала популярные"), gettext_lazy("Популярные")),
+    "new": Sort(["-created_at"], gettext_lazy("Сначала новые"), gettext_lazy("Новинки")),
+    "cheap": Sort([F("price_from").asc(nulls_last=True)], gettext_lazy("Сначала дешевле"), gettext_lazy("Дешевле")),
+    "expensive": Sort([F("price_from").desc(nulls_last=True)], gettext_lazy("Сначала дороже"), gettext_lazy("Дороже")),
 }
+DEFAULT_SORT = "popular"
 
-SORT_NAMES = {
-    "popular": gettext_lazy("Сначала популярные"),
-    "new": gettext_lazy("Сначала новые"),
-    "cheap": gettext_lazy("Сначала дешевле"),
-    "expensive": gettext_lazy("Сначала дороже"),
-}
 
-# Короткие названия для кнопки сортировки: полные стоят в открытом меню
-SORT_SHORT_NAMES = {
-    "popular": gettext_lazy("Популярные"),
-    "new": gettext_lazy("Новинки"),
-    "cheap": gettext_lazy("Дешевле"),
-    "expensive": gettext_lazy("Дороже"),
-}
+def sort_key(params):
+    """Сортировка из адреса. Неизвестная или пустая — по умолчанию."""
+    key = params.get("sort")
+    return key if key in SORTS else DEFAULT_SORT
+
 
 def to_decimal(text):
     try:
@@ -86,7 +87,7 @@ def apply_filters(products, params, attributes=None):
     if (price_max := to_decimal(params.get("price_max"))) is not None:
         products = products.filter(price_from__lte=price_max)
 
-    return products.order_by(*SORTS.get(params.get("sort"), SORTS["popular"]))
+    return products.order_by(*SORTS[sort_key(params)].order)
 
 
 def counted(queryset, base):
@@ -133,10 +134,23 @@ def facet_counts(base, params, categories, probes, groups, attributes):
         recount(values, AttributeValue, "value", drop={str(value.pk) for value in values})
 
 
-def size_options(base):
-    """Размеры, которые есть в наличии у товаров страницы."""
+def mark_checked(params, categories, probes, groups):
+    """Ставит каждой галочке панели checked: отмечена ли она в адресе. Как count — свойством самой записи."""
+    chosen = {key: set(params.getlist(key)) for key in ("category", "probe", "value")}
+    for item in categories:
+        item.checked = item.slug in chosen["category"]
+    for item in probes:
+        item.checked = str(item.pk) in chosen["probe"]
+    for group in groups:
+        for item in group.values.all():
+            item.checked = str(item.pk) in chosen["value"]
+
+
+def size_options(base, params):
+    """Размеры, которые есть в наличии у товаров страницы, и отмечен ли каждый: [{"value": "17", "checked": True}]."""
     variants = ProductVariant.objects.filter(product__in=base, in_stock=True).exclude(size="")
-    return list(variants.values_list("size", flat=True).distinct().order_by("size"))
+    chosen = set(params.getlist("size"))
+    return [{"value": size, "checked": size in chosen} for size in variants.values_list("size", flat=True).distinct().order_by("size")]
 
 
 def price_bounds(base):

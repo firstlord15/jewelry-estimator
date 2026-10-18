@@ -167,12 +167,6 @@ class Product(models.Model):
             self.sku = self.SKU_START + self.pk
             super().save(update_fields=["sku"])
 
-    @property
-    def min_price(self):
-        """Цена «от X сом»: самая низкая среди вариантов в наличии. None, если в наличии ничего нет."""
-        prices = [variant.price for variant in self.variants.all() if variant.in_stock]
-        return min(prices, default=None)
-
 
 class ProductVariant(models.Model):
     """Вариант товара: размер меняет вес, а вес меняет цену.

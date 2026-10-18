@@ -15,6 +15,11 @@ from rates.models import Probe
 from .models import Attribute, AttributeValue, Category, Product, ProductImage, ProductVariant
 
 
+def price_from(product):
+    """Цена «от» товара так, как её считает каталог: в базе, через with_price()."""
+    return Product.objects.with_price().get(pk=product.pk).price_from
+
+
 class CatalogData:
     """Общие данные для тестов каталога: проба 585 по 5000 сом за грамм и категория «Кольца»."""
 
@@ -90,24 +95,24 @@ class PriceTests(CatalogData, TestCase):
                 self.assertIsNone(variant.custom_price)
                 self.assertEqual(variant.price, Decimal("10000.00"))
 
-    def test_min_price_is_the_lowest_in_stock(self):
+    def test_price_from_is_the_lowest_in_stock(self):
         product = self.new_product()
         product.variants.create(size="16", weight=Decimal("1"), in_stock=False)  # дешевле, но нет в наличии
         product.variants.create(size="17", weight=Decimal("2"))
         product.variants.create(size="18", weight=Decimal("3"))
-        self.assertEqual(product.min_price, Decimal("10000.00"))
+        self.assertEqual(price_from(product), Decimal("10000.00"))
 
-    def test_min_price_counts_custom_prices(self):
+    def test_price_from_counts_custom_prices(self):
         product = self.new_product()
         product.variants.create(size="17", weight=Decimal("2"))
         product.variants.create(size="18", weight=Decimal("3"), custom_price=Decimal("7000"))
-        self.assertEqual(product.min_price, Decimal("7000"))
+        self.assertEqual(price_from(product), Decimal("7000"))
 
-    def test_min_price_is_none_when_nothing_in_stock(self):
+    def test_price_from_is_none_when_nothing_in_stock(self):
         product = self.new_product()
-        self.assertIsNone(product.min_price)  # вариантов нет
+        self.assertIsNone(price_from(product))  # вариантов нет
         product.variants.create(weight=Decimal("2"), in_stock=False)
-        self.assertIsNone(product.min_price)
+        self.assertIsNone(price_from(product))
 
 
 class CatalogModelTests(CatalogData, TestCase):
@@ -192,7 +197,7 @@ class CatalogChangeLogTests(CatalogData, TestCase):
         self.assertEqual(response.status_code, 302, "форма товара не сохранилась")
 
         product = Product.objects.get()
-        self.assertEqual(product.min_price, Decimal("10000.00"))
+        self.assertEqual(price_from(product), Decimal("10000.00"))
         created = {(log.object_label, log.changed_by) for log in ChangeLog.objects.filter(action=ChangeLog.Action.CREATE)}
         self.assertEqual(created, {("Кольцо с фианитом", self.admin), ("Кольцо с фианитом, 17", self.admin)})
 
@@ -310,11 +315,13 @@ class CatalogPagesTests(CatalogData, TestCase):
                 self.assertEqual(self.client.get(reverse("product", args=[product.slug])).status_code, 404)
         self.assertEqual(self.client.get(reverse("catalog_category", args=["hidden-cat"])).status_code, 404)
 
-    def test_price_from_matches_min_price(self):
+    def test_price_from_matches_variant_prices(self):
+        """Цена из базы совпадает с ценой вариантов из Python (тот же расчёт и округление)."""
         self.cheap.variants.create(size="18", weight=Decimal("9"), custom_price=Decimal("1234.50"))
         for product in Product.objects.with_price().prefetch_related("variants"):
             with self.subTest(product.slug):
-                self.assertEqual(product.price_from, product.min_price)
+                expected = min((v.price for v in product.variants.all() if v.in_stock), default=None)
+                self.assertEqual(product.price_from, expected)
 
     def test_category_page_shows_only_its_products(self):
         chains = Category.objects.create(name="Цепи", slug="chains")

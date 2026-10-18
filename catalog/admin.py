@@ -48,12 +48,12 @@ class ProductAdmin(LoggedAdmin):
     )
 
     def get_queryset(self, request):
-        # варианты одним запросом: иначе «Цена от» делает запрос на каждую строку списка
-        return super().get_queryset(request).prefetch_related("variants")
+        # «Цена от» считает база для всех строк сразу, как в каталоге; по колонке можно сортировать
+        return super().get_queryset(request).with_price()
 
-    @admin.display(description="Цена от, сом")
+    @admin.display(description="Цена от, сом", ordering="price_from")
     def price_from(self, obj):
-        return obj.min_price or "—"
+        return obj.price_from or "—"
 
 
 @admin.register(Category)

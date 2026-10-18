@@ -19,15 +19,15 @@
         </h1>
         <div class="dropdown sort">
             {# На кнопке короткое название, в меню полные. Не по умолчанию кнопка залита: видно, что порядок изменён #}
-            <button class="dropdown-btn{% if sort != 'popular' %} is-changed{% endif %}" type="button" data-toggle="sort-menu" aria-expanded="false" aria-haspopup="true" aria-label="{% trans 'Сортировка' %}: {{ sort_name }}">
+            <button class="dropdown-btn{% if sort_changed %} is-changed{% endif %}" type="button" data-toggle="sort-menu" aria-expanded="false" aria-haspopup="true" aria-label="{% trans 'Сортировка' %}: {{ current_sort.name }}">
                 {% include "icons/sort.svg" %}
-                <span class="sort__name">{{ sort_short_name }}</span>
+                <span class="sort__name">{{ current_sort.short }}</span>
             </button>
             {# Обычные ссылки, без HTMX: страница перезагружается, и название на кнопке и скрытое поле формы обновляются #}
             <div class="dropdown-menu" id="sort-menu">
                 <nav class="sort-links" aria-label="{% trans 'Сортировка' %}">
-                    {% for key, name in sorts %}
-                        <a href="{% querystring sort=key page=None %}"{% if key == sort %} aria-current="true"{% endif %}>{{ name }}</a>
+                    {% for key, item in sorts.items %}
+                        <a href="{% querystring sort=key page=None %}"{% if key == sort %} aria-current="true"{% endif %}>{{ item.name }}</a>
                     {% endfor %}
                 </nav>
             </div>
@@ -89,14 +89,14 @@
                     <details class="filter-group" open>
                         <summary>{% trans "Тип изделия" %}</summary>
                         {% for item in category_counts %}
-                            {% include "catalog/_filter_option.html" with name="category" value=item.slug label=item.name_local count=item.count selected=selected_categories %}
+                            {% include "catalog/_filter_option.html" with name="category" value=item.slug label=item.name_local count=item.count checked=item.checked %}
                         {% endfor %}
                     </details>
                 {% endif %}
                 <details class="filter-group" open>
                     <summary>{% trans "Проба" %}</summary>
                     {% for probe in probes %}
-                        {% include "catalog/_filter_option.html" with name="probe" value=probe.pk label=probe count=probe.count selected=selected_probes %}
+                        {% include "catalog/_filter_option.html" with name="probe" value=probe.pk label=probe count=probe.count checked=probe.checked %}
                     {% endfor %}
                 </details>
                 {# Размер: чипы, как выбор размера на странице товара #}
@@ -106,8 +106,8 @@
                         <div class="chips">
                             {% for size in sizes %}
                                 <label class="chip">
-                                    <input class="visually-hidden" type="checkbox" name="size" value="{{ size }}"{% if size in selected_sizes %} checked{% endif %} />
-                                    {{ size }}
+                                    <input class="visually-hidden" type="checkbox" name="size" value="{{ size.value }}"{% if size.checked %} checked{% endif %} />
+                                    {{ size.value }}
                                 </label>
                             {% endfor %}
                         </div>
@@ -121,13 +121,13 @@
                             <input class="filter-search" type="search" placeholder="{% trans 'Поиск' %}" aria-label="{% blocktrans with name=attribute.name_local %}Поиск: {{ name }}{% endblocktrans %}" data-filter-search />
                         {% endif %}
                         {% for item in attribute.values.all|slice:":6" %}
-                            {% include "catalog/_filter_option.html" with name="value" value=item.pk label=item.value_local count=item.count selected=selected_values %}
+                            {% include "catalog/_filter_option.html" with name="value" value=item.pk label=item.value_local count=item.count checked=item.checked %}
                         {% endfor %}
                         {% if attribute.values.all|length > 6 %}
                             <details class="filter-more">
                                 <summary>{% trans "Показать ещё" %}</summary>
                                 {% for item in attribute.values.all|slice:"6:" %}
-                                    {% include "catalog/_filter_option.html" with name="value" value=item.pk label=item.value_local count=item.count selected=selected_values %}
+                                    {% include "catalog/_filter_option.html" with name="value" value=item.pk label=item.value_local count=item.count checked=item.checked %}
                                 {% endfor %}
                             </details>
                         {% endif %}

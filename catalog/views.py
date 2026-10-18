@@ -6,8 +6,8 @@ from django.urls import reverse
 from rates.models import Probe
 
 from .models import Category, Product
-from .filters import active_filters, apply_filters, attribute_groups, counted, facet_counts, has_filters, price_bounds, quick_filters, size_options, value_attributes
-from .filters import SORT_NAMES, SORT_SHORT_NAMES, SORTS
+from .filters import active_filters, apply_filters, attribute_groups, counted, facet_counts, has_filters, mark_checked, price_bounds, quick_filters, size_options, value_attributes
+from .filters import DEFAULT_SORT, SORTS, sort_key
 
 PAGE_SIZE = 12
 
@@ -50,12 +50,12 @@ def product_list(request, category_slug=None):
     active = active_filters(request.GET, categories, probes, groups)
     if has_filters(request.GET):
         facet_counts(base, request.GET, category_counts, probes, groups, attributes)
-    sort = request.GET.get("sort") if request.GET.get("sort") in SORTS else "popular"
+    sort = sort_key(request.GET)
     context |= {
         "active": active,
         # «Сбросить»: категория тоже считается выбранным фильтром, сортировка — нет и сохраняется
         "reset_count": len(active) + (1 if category else 0),
-        "reset_url": reverse("catalog") + (f"?sort={sort}" if sort != "popular" else ""),
+        "reset_url": reverse("catalog") + (f"?sort={sort}" if sort != DEFAULT_SORT else ""),
         "quick": quick_filters(request.GET, groups),
         "category_counts": category_counts,
         "probes": probes,
@@ -66,18 +66,15 @@ def product_list(request, category_slug=None):
     if is_htmx:
         return render(request, "catalog/_results.html", context)
 
+    mark_checked(request.GET, category_counts, probes, groups)  # галочки нужны только всей странице: HTMX панель не меняет
     context |= {
         "categories": categories,
-        "sizes": size_options(base),
+        "sizes": size_options(base, request.GET),
         "bounds": price_bounds(base),
-        "selected_probes": request.GET.getlist("probe"),
-        "selected_values": request.GET.getlist("value"),
-        "selected_categories": request.GET.getlist("category"),
-        "selected_sizes": request.GET.getlist("size"),
         "sort": sort,
-        "sort_name": SORT_NAMES[sort],
-        "sort_short_name": SORT_SHORT_NAMES[sort],
-        "sorts": SORT_NAMES.items(),
+        "sort_changed": sort != DEFAULT_SORT,  # кнопка сортировки залита, если порядок не по умолчанию
+        "current_sort": SORTS[sort],
+        "sorts": SORTS,
     }
     return render(request, "catalog/list.html", context)
 
