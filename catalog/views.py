@@ -1,4 +1,5 @@
 from django.core.paginator import Paginator
+from django.db.models import F
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 
@@ -17,6 +18,7 @@ def product_detail(request, slug):
         .prefetch_related("images", "variants", "attribute_values__attribute")
     )
     product = get_object_or_404(products, slug=slug)
+    Product.objects.filter(pk=product.pk).update(views=F("views") + 1)
     variants = list(product.variants.all())
     selected = next((v for v in variants if v.in_stock), variants[0] if variants else None)
     return render(request, "catalog/detail.html", {"product": product, "variants": variants, "selected": selected})
