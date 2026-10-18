@@ -257,6 +257,11 @@
   cursor: pointer;
 }
 
+/* Без этого display: flex сильнее атрибута hidden, и поиск в группе ничего не прячет */
+.filter-option[hidden] {
+  display: none;
+}
+
 .filter-option input {
   flex-shrink: 0;
   width: 18px;
@@ -279,6 +284,10 @@
    Отмеченную не глушим — её снимают, чтобы вернуть товары */
 .filter-option:has(.is-zero):not(:has(input:checked)) {
   opacity: 0.45;
+}
+
+.filter-search {
+  margin-bottom: 6px;
 }
 
 .filter-more > summary {

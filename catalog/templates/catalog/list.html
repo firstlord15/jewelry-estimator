@@ -100,6 +100,9 @@
             {% for attribute in groups %}
                 <details class="filter-group"{% if forloop.counter <= 2 %} open{% endif %}>
                     <summary>{{ attribute.name_local }}</summary>
+                    {% if attribute.is_searchable %}
+                        <input class="filter-search" type="search" placeholder="{% trans 'Поиск' %}" aria-label="{% blocktrans with name=attribute.name_local %}Поиск: {{ name }}{% endblocktrans %}" data-filter-search />
+                    {% endif %}
                     {% for item in attribute.values.all|slice:":6" %}
                         {% include "catalog/_filter_option.html" with name="value" value=item.pk label=item.value_local count=item.count selected=selected_values %}
                     {% endfor %}
@@ -120,4 +123,7 @@
             {% include "catalog/_cards.html" %}
         </div>
     </div>
+{% endblock %}
+{% block extra_js %}
+    <script src="{% static 'catalog/catalog.js' %}" defer></script>
 {% endblock %}
