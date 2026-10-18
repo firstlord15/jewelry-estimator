@@ -5,6 +5,8 @@
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        {# «Назад» берёт страницу с сервера, а не из кеша HTMX#}
+        <meta name="htmx-config" content='{"historyCacheSize": 0}' />
         <title>{% block title %}{{ SITE_NAME }}{% endblock %}</title>
         <meta name="description" content="{% block description %}{% endblock %}" />
         <link rel="stylesheet" href="{% static 'css/base.css' %}" />
@@ -16,7 +18,8 @@
     <body {% block body_attrs %}{% endblock %}>
         <a class="skip-link" href="#content">{% trans "Перейти к содержимому" %}</a>
         {# Полоска вверху страницы: видна, пока идёт запрос HTMX (фильтры каталога, «Показать ещё») #}
-        <div class="progress" id="progress" aria-hidden="true"></div>
+        <div class="progress" id="progress" aria-hidden="true">
+        </div>
         <div class="page">
             {% include "partials/header.html" %}
             <main class="container" id="content" tabindex="-1">
