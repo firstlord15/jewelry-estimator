@@ -357,6 +357,28 @@ class CatalogPagesTests(CatalogData, TestCase):
         response = self.client.get(reverse("catalog"), {"probe": "abc", "value": "x", "price_min": "дорого", "sort": "?", "page": "99"})
         self.assertEqual(response.status_code, 200)
 
+    def test_bot_addresses_do_not_crash_and_do_not_filter(self):
+        """Такие адреса шлют сканеры: «nan» и «Infinity» не числа для базы, нулевой символ PostgreSQL не принимает."""
+        bad = [
+            {"price_min": "nan"},
+            {"price_max": "Infinity"},
+            {"price_max": "-5"},
+            {"category": "rings\x00"},
+            {"size": "17\x00"},
+        ]
+        for params in bad:
+            for headers in ({}, {"HTTP_HX_REQUEST": "true"}):
+                with self.subTest(params=params, htmx=bool(headers)):
+                    response = self.client.get(reverse("catalog"), params, **headers)
+                    self.assertEqual(response.status_code, 200)
+                    self.assertNotContains(response, "chip--active")  # фильтр не применился, чипа нет
+
+    def test_sizes_are_sorted_by_number(self):
+        for size in ("10", "9", "16.5", "45 см"):
+            self.cheap.variants.create(size=size, weight=Decimal("1"))
+        sizes = [size["value"] for size in self.client.get(reverse("catalog")).context["sizes"]]
+        self.assertEqual(sizes, ["9", "10", "16.5", "17", "45 см"])  # как текст было бы 10, 16.5, 17, 45 см, 9
+
     def test_filter_form_keeps_selected_values(self):
         response = self.client.get(reverse("catalog"), {"probe": self.probe.pk, "price_min": "100", "in_stock": 1})
         self.assertContains(response, f'name="probe" value="{self.probe.pk}" checked')
@@ -485,6 +507,7 @@ class CatalogAdminListTests(CatalogData, TestCase):
 
         self.client.get(url)  # первый запрос прогревает кеши Django
         self.assertEqual(queries_with(3, "a"), queries_with(10, "b"))  # товаров больше, запросов столько же
+
 
 class SeedCatalogTests(TestCase):
     def test_second_run_creates_nothing(self):

@@ -1,3 +1,4 @@
+import re
 from decimal import Decimal, InvalidOperation
 from typing import NamedTuple
 
@@ -8,6 +9,7 @@ from django.utils.translation import gettext as _, gettext_lazy
 from rates.models import Probe
 
 from .models import Attribute, AttributeValue, Category, ProductVariant
+
 
 class Sort(NamedTuple):
     order: list  # для order_by
@@ -32,10 +34,17 @@ def sort_key(params):
 
 
 def to_decimal(text):
+    """Цена из адреса: «1 500,50» → 1500.50. Не число, «nan», «Infinity» и отрицательное — None, фильтра нет."""
     try:
-        return Decimal(text.replace(",", ".").replace(" ", ""))
+        value = Decimal(text.replace(",", ".").replace(" ", ""))
     except (InvalidOperation, AttributeError):
         return None
+    return value if value.is_finite() and value >= 0 else None
+
+
+def text_values(params, key):
+    """Значения параметра без нулевого символа: PostgreSQL не принимает его в тексте, а боты шлют такое нарочно."""
+    return [v for v in params.getlist(key) if "\x00" not in v]
 
 
 # Параметры адреса, которые отбирают товары. sort и page не в счёт
@@ -55,7 +64,7 @@ def value_attributes(params):
 
 def apply_filters(products, params, attributes=None):
     """Товары по фильтрам из адреса. attributes — готовый ответ value_attributes, чтобы не спрашивать базу повторно."""
-    slugs = params.getlist("category")
+    slugs = text_values(params, "category")
     if slugs:
         products = products.filter(category__slug__in=slugs)
 
@@ -72,9 +81,9 @@ def apply_filters(products, params, attributes=None):
             by_attribute.setdefault(attributes[value], []).append(value)
     for ids in by_attribute.values():
         products = products.filter(attribute_values__in=ids)
-    
+
     # до with_price(): тогда цена «от» считается по выбранным размерам, а не по всем
-    sizes = params.getlist("size")
+    sizes = text_values(params, "size")
     if sizes:
         products = products.filter(variants__size__in=sizes, variants__in_stock=True)
 
@@ -146,11 +155,19 @@ def mark_checked(params, categories, probes, groups):
             item.checked = str(item.pk) in chosen["value"]
 
 
+def size_order(size):
+    """Ключ сортировки размеров по числу в начале: «9» раньше «10», «16.5» между 16 и 17. Без числа — в конец."""
+    number = re.match(r"\d+(?:[.,]\d+)?", size)
+    return (float(number.group().replace(",", ".")) if number else float("inf"), size)
+
+
 def size_options(base, params):
     """Размеры, которые есть в наличии у товаров страницы, и отмечен ли каждый: [{"value": "17", "checked": True}]."""
     variants = ProductVariant.objects.filter(product__in=base, in_stock=True).exclude(size="")
+    # order_by() сбрасывает порядок модели (товар, вес): иначе distinct учитывает и его, и размеры повторяются
+    sizes = sorted(variants.values_list("size", flat=True).order_by().distinct(), key=size_order)
     chosen = set(params.getlist("size"))
-    return [{"value": size, "checked": size in chosen} for size in variants.values_list("size", flat=True).distinct().order_by("size")]
+    return [{"value": size, "checked": size in chosen} for size in sizes]
 
 
 def price_bounds(base):
@@ -160,12 +177,14 @@ def price_bounds(base):
         return None
     return {"low": int(bounds["low"] // 100 * 100), "high": int(-(-bounds["high"] // 100) * 100)}
 
+
 def with_value(params, key, value):
     """Адрес текущей страницы с ещё одним значением фильтра."""
     query = params.copy()
     query.appendlist(key, str(value))
     query.pop("page", None)
     return "?" + query.urlencode()
+
 
 def quick_filters(params, groups):
     """Быстрые фильтры («Бриллиант»), которые ещё не выбраны: название и адрес с этим фильтром."""
@@ -176,6 +195,7 @@ def quick_filters(params, groups):
         for value in group.values.all()
         if value.is_quick and str(value.pk) not in chosen
     ]
+
 
 def without(params, key, value=None):
     """Адрес текущей страницы без одного значения фильтра. Без value убирает параметр целиком."""
@@ -208,7 +228,7 @@ def active_filters(params, categories, probes, groups):
             if str(value.pk) in chosen:
                 add(value.value_local, "value", value.pk)
 
-    for size in params.getlist("size"):
+    for size in text_values(params, "size"):
         add(_("Размер %(size)s") % {"size": size}, "size", size)
 
     # Цена одним чипом: «от 10 000 до 175 000 сом». Крестик убирает обе границы.

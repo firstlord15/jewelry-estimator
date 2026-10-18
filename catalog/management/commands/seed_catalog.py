@@ -61,7 +61,7 @@ class Command(BaseCommand):
             result[name] = [AttributeValue.objects.get_or_create(attribute=attribute, value=value)[0] for value in value_names]
         return result
 
-    def create_product(self, category, item_name, number, probes: Probe, values):
+    def create_product(self, category, item_name, number, probes, values):
         """Создаёт один товар с вариантами. Возвращает 1, если товар новый, и 0, если он уже был."""
         product, is_new = Product.objects.get_or_create (
             slug = f"seed-{category.slug}-{number}",
@@ -86,6 +86,3 @@ class Command(BaseCommand):
             )
         product.attribute_values.set([group[number % len(group)] for group in values.values()])
         return 1
-
-
-

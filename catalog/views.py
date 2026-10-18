@@ -1,21 +1,23 @@
 from django.core.paginator import Paginator
-from django.db.models import F
+from django.db.models import F, Prefetch
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 
 from rates.models import Probe
 
-from .models import Category, Product
+from .models import AttributeValue, Category, Product
 from .filters import active_filters, apply_filters, attribute_groups, counted, facet_counts, has_filters, mark_checked, price_bounds, quick_filters, size_options, value_attributes
 from .filters import DEFAULT_SORT, SORTS, sort_key
 
 PAGE_SIZE = 12
 
+
 def product_detail(request, slug):
     products = (
         Product.objects.visible()
         .select_related("category", "probe")
-        .prefetch_related("images", "variants", "attribute_values__attribute")
+        # характеристики вместе со своими названиями одним запросом, а не двумя
+        .prefetch_related("images", "variants", Prefetch("attribute_values", queryset=AttributeValue.objects.select_related("attribute")))
     )
     product = get_object_or_404(products, slug=slug)
     Product.objects.filter(pk=product.pk).update(views=F("views") + 1)
@@ -77,4 +79,3 @@ def product_list(request, category_slug=None):
         "sorts": SORTS,
     }
     return render(request, "catalog/list.html", context)
-
