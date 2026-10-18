@@ -1,0 +1,346 @@
+/* ---------- Панель фильтров: слева на компьютере, окном на телефоне ---------- */
+
+.filters {
+  gap: 20px;
+}
+
+/* Компьютер: dialog не создаёт своей рамки, форма встаёт в сетку .catalog как раньше.
+   display сильнее встроенного правила браузера «закрытый dialog не показывать» */
+.filters-dialog {
+  display: contents;
+}
+
+/* Кнопка «Фильтры», шапка и нижняя кнопка окна нужны только на телефоне */
+.filters-open,
+.filters__head,
+.filters__footer {
+  display: none;
+}
+
+.filters-open {
+  align-items: center;
+  gap: 6px;
+}
+
+/* число выбранных: золотой кружок; пустой не показывается */
+.filters-open__count:not(:empty) {
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  font-size: 11px;
+  color: var(--on-gold);
+  background: var(--gold-bright);
+  border-radius: 999px;
+}
+
+.filters__head {
+  justify-content: space-between;
+  align-items: center;
+}
+
+.filters__head h2 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.filters__show {
+  width: 100%;
+  padding: 14px;
+  font: 600 16px var(--font);
+  color: var(--on-gold);
+  background: var(--gold-bright);
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+/* в узкой колонке фильтров чипы компактнее, чтобы вставали по два-три в ряд */
+.filters .chip {
+  padding: 6px 12px;
+  font-size: 13px;
+}
+
+/* ---------- Наличие: галочка в виде переключателя, подпись слева ---------- */
+
+.switch {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.switch input {
+  appearance: none;
+  position: relative;
+  flex-shrink: 0;
+  width: 44px;
+  height: 24px;
+  margin: 0;
+  background: var(--soft);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.switch input::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  background: var(--ink);
+  border-radius: 50%;
+  transition: translate 0.15s;
+}
+
+.switch input:checked {
+  background: var(--gold-bright);
+}
+
+.switch input:checked::after {
+  translate: 19px 0;
+}
+
+.switch input:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* ---------- Группа: заголовок со стрелкой сворачивает список ---------- */
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 14px;
+  border-top: 1px solid var(--glass-border);
+}
+
+.filter-group > summary,
+.filter-more > summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+/* Safari рисует свой треугольник через этот псевдоэлемент, list-style его не убирает */
+.filter-group > summary::-webkit-details-marker,
+.filter-more > summary::-webkit-details-marker {
+  display: none;
+}
+
+.filter-group > summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+/* Стрелка справа: тот же рисунок, что icons/chevron.svg в шапке. Маска красит его цветом текста (currentColor).
+   Закрыта — вниз, открыта — вверх */
+.filter-group > summary::after {
+  content: "";
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  color: var(--muted);
+  background: currentColor;
+  -webkit-mask: var(--chevron) center / contain no-repeat;
+  mask: var(--chevron) center / contain no-repeat;
+  transition: rotate 0.15s;
+  --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+}
+
+.filter-group[open] > summary::after {
+  rotate: 180deg;
+}
+
+/* Строка: галочка, название, число товаров справа */
+.filter-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 0;
+  cursor: pointer;
+}
+
+/* Без этого display: flex сильнее атрибута hidden, и поиск в группе ничего не прячет */
+.filter-option[hidden] {
+  display: none;
+}
+
+.filter-option input {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--gold-bright);
+}
+
+.filter-option__name {
+  flex: 1;
+}
+
+.filter-option__count {
+  color: var(--muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* С выбранными фильтрами у значения 0 товаров: строка остаётся на месте, но приглушена.
+   Отмеченную не глушим — её снимают, чтобы вернуть товары */
+.filter-option:has(.is-zero):not(:has(input:checked)) {
+  opacity: 0.45;
+}
+
+.filter-search {
+  margin-bottom: 6px;
+}
+
+.filter-more > summary {
+  padding: 5px 0;
+  color: var(--gold-bright);
+  font-size: 14px;
+}
+
+.filter-more[open] > summary {
+  display: none; /* раскрыли — подпись больше не нужна */
+}
+
+/* ---------- Цена: поля и ползунок ---------- */
+
+.filters__price {
+  display: flex;
+  gap: 8px;
+}
+
+/* Ползунок цены: два range друг на друге, полоса рисуется отдельно под ними */
+.price-range__slider {
+  position: relative;
+  height: 24px;
+  margin-top: 12px;
+  --from: 0%;
+  --to: 100%;
+}
+
+/* полоса: серая, между ручками золотая */
+.price-range__slider::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 0;
+  left: 0;
+  height: 4px;
+  translate: 0 -50%;
+  background: linear-gradient(to right, var(--soft) var(--from), var(--gold-bright) var(--from) var(--to), var(--soft) var(--to));
+  border-radius: 999px;
+}
+
+/* Сами range прозрачные и не ловят мышь, кроме ручек */
+.price-range__slider input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  appearance: none;
+  background: none;
+  border: 0;
+  pointer-events: none;
+}
+
+.price-range__slider input::-webkit-slider-thumb {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  background: var(--ink);
+  border: 2px solid var(--accent);
+  box-shadow: 1px 1px 1px black;
+  border-radius: 50%;
+  cursor: grab;
+  pointer-events: auto;
+}
+
+.price-range__slider input::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  background: var(--ink);
+  border: 2px solid var(--accent);
+  box-shadow:
+    0px 6px 13px 0px #0000001f,
+    0px 0.5px 4px 0px #0000001f;
+  border-radius: 50%;
+  cursor: grab;
+  pointer-events: auto;
+}
+
+.price-range__slider input:focus-visible::-webkit-slider-thumb {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* ---------- Планшет и телефон: панель в окне на весь экран, открывается кнопкой «Фильтры» ---------- */
+
+@media (max-width: 960px) {
+  .filters-dialog {
+    display: none;
+  }
+
+  .filters-dialog[open] {
+    display: block;
+    width: 100%;
+    max-width: none;
+    height: 100dvh;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    overflow-y: auto;
+    background: var(--menu-bg);
+    border: 0;
+  }
+
+  .filters-dialog::backdrop {
+    background: rgba(0, 0, 0, 0.55);
+  }
+
+  .filters-dialog .filters {
+    min-height: 100%;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .filters-open {
+    display: inline-flex;
+  }
+
+  .filters__head {
+    display: flex;
+  }
+
+  /* «Показать N товаров» прилипает к низу окна, пока листаешь фильтры */
+  .filters__footer {
+    display: block;
+    position: sticky;
+    bottom: 0;
+    padding: 12px 0 4px;
+    background: var(--menu-bg);
+  }
+
+  /* пока окно открыто, страница под ним не листается (особенно заметно на iPhone) */
+  body:has(.filters-dialog[open]) {
+    overflow: hidden;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .filter-group > summary::after {
+    transition: none;
+  }
+}

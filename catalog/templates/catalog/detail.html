@@ -4,7 +4,7 @@
     {{ product.name_local }} — {{ SITE_NAME }}
 {% endblock %}
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'catalog/catalog.css' %}" />
+    <link rel="stylesheet" href="{% static 'catalog/css/product.css' %}" />
 {% endblock %}
 {% block content %}
     <nav class="breadcrumbs" aria-label="{% trans 'Вы здесь' %}">
@@ -13,7 +13,7 @@
         <a href="{% url 'catalog_category' product.category.slug %}">{{ product.category.name_local }}</a>
     </nav>
     <article class="product panel glass">
-        {# Слева фото: большое и ряд миниатюр. Нажатие на миниатюру меняет большое фото (catalog.js) #}
+        {# Слева фото: большое и ряд миниатюр. Нажатие на миниатюру меняет большое фото (product.js) #}
         <div class="product__gallery">
             {% with images=product.images.all %}
                 {% if images %}
@@ -28,7 +28,7 @@
                         </div>
                     {% endif %}
                 {% else %}
-                    <div class="product__photo product-card__noimage">
+                    <div class="product__photo product__noimage">
                         {% include "icons/logo.svg" %}
                     </div>
                 {% endif %}
@@ -37,7 +37,7 @@
         <div class="product__info">
             <h1 class="product__name">{{ product.name_local }}</h1>
             <p class="muted">{% trans "Артикул" %}: {{ product.sku }} · {{ product.probe }}</p>
-            {# Цена и наличие выбранного размера. При смене размера их подставляет catalog.js из data-атрибутов #}
+            {# Цена и наличие выбранного размера. При смене размера их подставляет product.js из data-атрибутов #}
             <p class="product__price">
                 {% if selected %}
                     <span id="price">{{ selected.price|floatformat:"-2g" }}</span> {% trans "сом" %}
@@ -45,7 +45,7 @@
                 <span class="product__stock muted" id="stock" {% if selected.in_stock %}hidden{% endif %}>{% trans "Нет в наличии" %}</span>
             </p>
             {% if variants|length > 1 %}
-                <fieldset class="filters__group">
+                <fieldset class="product__sizes">
                     <legend>{% trans "Размер" %}</legend>
                     <div class="chips">
                         {% for variant in variants %}
@@ -84,5 +84,5 @@
     </article>
 {% endblock %}
 {% block extra_js %}
-    <script src="{% static 'catalog/catalog.js' %}" defer></script>
+    <script src="{% static 'catalog/js/product.js' %}" defer></script>
 {% endblock %}

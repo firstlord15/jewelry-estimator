@@ -40,7 +40,7 @@ def product_list(request, category_slug=None):
     # Запрос от HTMX: без шапки и формы. Кнопка «Назад» в браузере — исключение: тогда HTMX просит страницу целиком
     is_htmx = request.headers.get("HX-Request") and not request.headers.get("HX-History-Restore-Request")
     if is_htmx and request.GET.get("page"):  # «Показать ещё»: только следующие карточки, фильтры не менялись
-        return render(request, "catalog/_cards.html", context)
+        return render(request, "catalog/cards/grid.html", context)
 
     # Списки галочек панели — по всей странице, а числа у них — под выбранные фильтры.
     # Ничего не выбрано — числа уже верные (их посчитал counted), пересчёт дал бы те же самые
@@ -64,7 +64,7 @@ def product_list(request, category_slug=None):
 
     # Смена фильтра: карточки и попутно число товаров, чипы ряда и числа у галочек панели
     if is_htmx:
-        return render(request, "catalog/_results.html", context)
+        return render(request, "catalog/list/results.html", context)
 
     mark_checked(request.GET, category_counts, probes, groups)  # галочки нужны только всей странице: HTMX панель не меняет
     context |= {

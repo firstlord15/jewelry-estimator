@@ -1,0 +1,88 @@
+/* ---------- Карточки товаров: сетка, карточка, «Показать ещё» ----------
+   Отдельным файлом, потому что карточки понадобятся и вне каталога (главная, избранное) */
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 20px;
+}
+
+/* сообщение «ничего не найдено» и кнопка «Показать ещё» занимают всю ширину сетки */
+.product-grid__empty,
+.product-grid__more {
+  grid-column: 1 / -1;
+}
+
+.product-grid__more {
+  display: flex;
+  justify-content: center;
+  padding-top: 8px;
+}
+
+.product-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 22px;
+}
+
+.product-card img,
+.product-card__noimage {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 14px;
+}
+
+/* нет фото: логотип по центру приглушённой плашки */
+.product-card__noimage {
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  background: var(--soft);
+}
+
+.product-card__noimage .icon {
+  width: 48px;
+  height: 48px;
+}
+
+.product-card__price {
+  font-weight: 600;
+  color: var(--gold-bright);
+  font-variant-numeric: tabular-nums;
+}
+
+/* пока идёт запрос HTMX, старые карточки остаются на месте приглушёнными: страница не прыгает */
+.htmx-request .product-card,
+.htmx-request.product-grid__more {
+  opacity: 0.5;
+  transition: opacity 0.15s;
+}
+
+@media (hover: hover) {
+  .product-card:hover {
+    border-color: var(--glass-hover-border);
+  }
+}
+
+/* Телефон: две карточки в ряд */
+@media (max-width: 480px) {
+  .product-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .product-card {
+    padding: 8px;
+    border-radius: 18px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .htmx-request .product-card {
+    transition: none;
+  }
+}

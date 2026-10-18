@@ -46,22 +46,22 @@
     // при переходе на широкий экран мобильная панель сама закрывается
     mobile.addEventListener("change", () => closeAll());
 
-    // ---------- Окно поиска ----------
+    // ---------- Окна <dialog>: поиск в шапке, фильтры каталога ----------
+    // Кнопка [data-dialog-open="id"] открывает окно с этим id; кнопка [data-dialog-close] внутри окна закрывает его.
+    // Фокус браузер сам ставит на поле с autofocus, Esc тоже закрывает окно сам
 
-    const dialog = $("#search-dialog");
+    for (const button of $$("[data-dialog-open]")) {
+        const dialog = document.getElementById(button.dataset.dialogOpen);
+        button.addEventListener("click", () => {
+            closeAll();
+            dialog?.showModal();
+        });
+    }
 
-    if (dialog) {
-        for (const button of $$("[data-open-search]")) {
-            button.addEventListener("click", () => {
-                closeAll();
-                dialog.showModal();
-                $("input", dialog)?.focus();
-            });
-        }
-        for (const button of $$("[data-close-search]")) button.addEventListener("click", () => dialog.close());
-        // клик по затемнению (по самому <dialog>, а не по содержимому) закрывает окно
+    // Один обработчик на окно: кнопки закрытия и клик по затемнению (цель — сам <dialog>, а не его содержимое)
+    for (const dialog of $$("dialog")) {
         dialog.addEventListener("click", (event) => {
-            if (event.target === dialog) dialog.close();
+            if (event.target === dialog || event.target.closest("[data-dialog-close]")) dialog.close();
         });
     }
 

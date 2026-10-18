@@ -1,0 +1,8 @@
+{# Ответ на смену фильтра: карточки в #grid и попутно (hx-swap-oob) число товаров, чипы ряда и числа у галочек панели #}
+{% include "catalog/cards/grid.html" %}
+{% include "catalog/list/count.html" with oob=True %}
+{% include "catalog/chips/selected.html" with oob=True %}
+{% include "catalog/chips/quick.html" with oob=True %}
+{% include "catalog/filters/facets.html" %}
+{% include "catalog/chips/filters_count.html" with oob=True %}
+{% include "catalog/filters/show_count.html" with oob=True %}

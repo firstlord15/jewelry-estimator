@@ -1,0 +1,164 @@
+/* ---------- Страница товара: крошки, галерея, цена, характеристики ---------- */
+
+.breadcrumbs {
+  display: flex;
+  gap: 8px;
+  margin-top: 24px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.breadcrumbs a {
+  color: var(--muted);
+}
+
+.product {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 32px;
+}
+
+.product__gallery,
+.product__info {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.product__photo {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  object-fit: contain;
+  background: var(--soft);
+  border-radius: 22px;
+}
+
+/* нет фото: логотип по центру приглушённой плашки, как у карточки в каталоге, только крупнее */
+.product__noimage {
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+}
+
+.product__noimage .icon {
+  width: 96px;
+  height: 96px;
+}
+
+.product__thumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.product__thumb {
+  width: 72px;
+  height: 72px;
+  padding: 0;
+  overflow: hidden;
+  background: none;
+  border: 2px solid transparent;
+  border-radius: 14px;
+  cursor: pointer;
+}
+
+.product__thumb[aria-current="true"] {
+  border-color: var(--gold-bright);
+}
+
+.product__thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.product__name {
+  font-size: 32px;
+}
+
+.product__price {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 12px;
+  font: 600 32px/1.2 var(--font);
+  font-variant-numeric: tabular-nums;
+  color: var(--gold-bright);
+}
+
+/* Выбор размера: fieldset без браузерной рамки, подпись мелко и серым */
+.product__sizes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.product__sizes legend {
+  margin-bottom: 8px;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.product__stock {
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.product__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.product__description p + p {
+  margin-top: 8px;
+}
+
+.product__attributes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+}
+
+.product__attributes div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.product__attributes dd {
+  margin: 0;
+  text-align: right;
+}
+
+@media (hover: hover) {
+  .breadcrumbs a:hover {
+    color: var(--gold-bright);
+  }
+}
+
+/* Планшет и телефон: фото над описанием */
+@media (max-width: 960px) {
+  .product {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .product__name,
+  .product__price {
+    font-size: 26px;
+  }
+}

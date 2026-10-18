@@ -2,5 +2,5 @@
 <label class="filter-option">
     <input type="checkbox" name="{{ name }}" value="{{ value }}"{% if checked %} checked{% endif %} />
     <span class="filter-option__name">{{ label }}</span>
-    {% include "catalog/_facet_count.html" %}
+    {% include "catalog/filters/facet_count.html" %}
 </label>

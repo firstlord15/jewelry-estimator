@@ -1,0 +1,88 @@
+{% load i18n %}
+<dialog class="filters-dialog" id="filters-dialog" aria-labelledby="filters-title">
+    {# Фильтры: обычная GET-форма. С HTMX сетка обновляется без перезагрузки, без него форма отправляется как есть #}
+    <form class="filters panel glass" id="filters" method="get" hx-get="{{ request.path }}" hx-target="#grid" hx-trigger="change, submit" hx-push-url="true" hx-indicator="#grid">
+        <div class="filters__head">
+            <h2 id="filters-title">{% trans "Фильтры" %}</h2>
+            <button class="search-close" type="button" data-dialog-close aria-label="{% trans 'Закрыть' %}">
+                {% include "icons/close.svg" %}
+            </button>
+        </div>
+        <input type="hidden" name="sort" value="{{ sort }}" />
+        {# Наличие: обычная галочка, оформленная переключателем #}
+        <label class="switch">
+            <span>{% trans "Есть в наличии" %}</span>
+            <input type="checkbox" name="in_stock" value="1"{% if request.GET.in_stock %} checked{% endif %} />
+        </label>
+        {# Цена: поля «от» и «до», под ними ползунок. Ползунки без name: в адрес уходят только поля. Без границ или при одной цене ползунка нет #}
+        <div class="price-range"{% if bounds and bounds.low != bounds.high %} data-price-range data-min="{{ bounds.low }}" data-max="{{ bounds.high }}"{% endif %}>
+            <div class="filters__price">
+                <input name="price_min" inputmode="decimal" value="{{ request.GET.price_min }}" placeholder="{{ bounds.low|default:_("от") }}" aria-label="{% trans 'Цена от' %}" />
+                <input name="price_max" inputmode="decimal" value="{{ request.GET.price_max }}" placeholder="{{ bounds.high|default:_("до") }}" aria-label="{% trans 'Цена до' %}" />
+            </div>
+            {% if bounds and bounds.low != bounds.high %}
+                <div class="price-range__slider">
+                    <input type="range" data-range="min" min="{{ bounds.low }}" max="{{ bounds.high }}" step="100" aria-label="{% trans 'Цена от' %}" />
+                    <input type="range" data-range="max" min="{{ bounds.low }}" max="{{ bounds.high }}" step="100" aria-label="{% trans 'Цена до' %}" />
+                </div>
+            {% endif %}
+        </div>
+        {# Тип изделия: только на /catalog/, на странице категории он уже выбран #}
+        {% if not category %}
+            <details class="filter-group" open>
+                <summary>{% trans "Тип изделия" %}</summary>
+                {% for item in category_counts %}
+                    {% include "catalog/filters/option.html" with name="category" value=item.slug label=item.name_local count=item.count checked=item.checked %}
+                {% endfor %}
+            </details>
+        {% endif %}
+        <details class="filter-group" open>
+            <summary>{% trans "Проба" %}</summary>
+            {% for probe in probes %}
+                {% include "catalog/filters/option.html" with name="probe" value=probe.pk label=probe count=probe.count checked=probe.checked %}
+            {% endfor %}
+        </details>
+        {# Размер: чипы, как выбор размера на странице товара #}
+        {% if sizes %}
+            <details class="filter-group" open>
+                <summary>{% trans "Размер" %}</summary>
+                <div class="chips">
+                    {% for size in sizes %}
+                        <label class="chip">
+                            <input class="visually-hidden" type="checkbox" name="size" value="{{ size.value }}"{% if size.checked %} checked{% endif %} />
+                            {{ size.value }}
+                        </label>
+                    {% endfor %}
+                </div>
+            </details>
+        {% endif %}
+        {# Характеристики: первые две группы открыты, остальные свёрнуты. Видно 6 значений, остальные под «Показать ещё» #}
+        {% for attribute in groups %}
+            <details class="filter-group"{% if forloop.counter <= 2 %} open{% endif %}>
+                <summary>{{ attribute.name_local }}</summary>
+                {% if attribute.is_searchable %}
+                    <input class="filter-search" type="search" placeholder="{% trans 'Поиск' %}" aria-label="{% blocktrans with name=attribute.name_local %}Поиск: {{ name }}{% endblocktrans %}" data-filter-search />
+                {% endif %}
+                {% for item in attribute.values.all|slice:":6" %}
+                    {% include "catalog/filters/option.html" with name="value" value=item.pk label=item.value_local count=item.count checked=item.checked %}
+                {% endfor %}
+                {% if attribute.values.all|length > 6 %}
+                    <details class="filter-more">
+                        <summary>{% trans "Показать ещё" %}</summary>
+                        {% for item in attribute.values.all|slice:"6:" %}
+                            {% include "catalog/filters/option.html" with name="value" value=item.pk label=item.value_local count=item.count checked=item.checked %}
+                        {% endfor %}
+                    </details>
+                {% endif %}
+            </details>
+        {% endfor %}
+        {# Телефон: закреплена внизу окна. #}
+        <div class="filters__footer">
+            <button class="filters__show" type="button" data-dialog-close>
+                {% include "catalog/filters/show_count.html" %}
+            </button>
+        </div>
+        {# Невидимая кнопка: Enter в поле цены отправляет форму #}
+        <button class="visually-hidden" type="submit" tabindex="-1">{% trans "Показать" %}</button>
+    </form>
+</dialog>

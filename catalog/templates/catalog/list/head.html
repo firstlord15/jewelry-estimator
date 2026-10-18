@@ -1,0 +1,21 @@
+{% load i18n %}
+{# Заголовок с числом товаров и кнопка сортировки #}
+<h1 class="catalog-title">
+    {% if category %}{{ category.name_local }}{% else %}{% trans "Каталог" %}{% endif %}
+    {% include "catalog/list/count.html" %}
+</h1>
+<div class="dropdown sort">
+    {# На кнопке короткое название, в меню полные. Не по умолчанию кнопка залита: видно, что порядок изменён #}
+    <button class="dropdown-btn{% if sort_changed %} is-changed{% endif %}" type="button" data-toggle="sort-menu" aria-expanded="false" aria-haspopup="true" aria-label="{% trans 'Сортировка' %}: {{ current_sort.name }}">
+        {% include "icons/sort.svg" %}
+        <span class="sort__name">{{ current_sort.short }}</span>
+    </button>
+    {# Обычные ссылки, без HTMX: страница перезагружается, и название на кнопке и скрытое поле формы обновляются #}
+    <div class="dropdown-menu" id="sort-menu">
+        <nav class="sort-links" aria-label="{% trans 'Сортировка' %}">
+            {% for key, item in sorts.items %}
+                <a href="{% querystring sort=key page=None %}"{% if key == sort %} aria-current="true"{% endif %}>{{ item.name }}</a>
+            {% endfor %}
+        </nav>
+    </div>
+</div>

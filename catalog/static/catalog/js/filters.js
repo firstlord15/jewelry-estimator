@@ -1,24 +1,8 @@
 "use strict";
 
-// Страница товара. Цену сервер кладёт в data-price уже отформатированной: здесь только подстановка
+// Панель фильтров каталога. Окно на телефоне открывает и закрывает общий код окон в base.js
 
-// Смена размера: цена и «Нет в наличии»
-document.querySelectorAll('input[name="variant"]').forEach((radio) =>
-    radio.addEventListener("change", () => {
-        document.querySelector("#price").textContent = radio.dataset.price;
-        document.querySelector("#stock").hidden = radio.dataset.stock === "1";
-    }),
-);
-
-// Галерея: нажатие на миниатюру показывает это фото крупно
-document.querySelectorAll(".product__thumb").forEach((thumb) =>
-    thumb.addEventListener("click", () => {
-        document.querySelector("#gallery-main").src = thumb.dataset.large;
-        document.querySelectorAll(".product__thumb").forEach((other) => other.removeAttribute("aria-current"));
-        thumb.setAttribute("aria-current", "true");
-    }),
-);
-
+// Поиск внутри группы фильтра: прячет значения, в названии которых нет введённого текста. На сервер ничего не уходит
 document.querySelectorAll("[data-filter-search]").forEach((search) => {
     const group = search.closest(".filter-group");
 
@@ -84,16 +68,3 @@ document.querySelectorAll("[data-price-range]").forEach((box) => {
     }
     paint();
 });
-
-// Фильтры на телефоне: панель открывается поверх страницы в <dialog>. Esc и затемнение закрывают её сами
-// (Esc — браузер, затемнение — проверка ниже). На компьютере кнопки открытия не видно, и код не срабатывает
-const filtersDialog = document.querySelector("#filters-dialog");
-if (filtersDialog) {
-    document.querySelector("[data-open-filters]")?.addEventListener("click", () => filtersDialog.showModal());
-    filtersDialog.querySelectorAll("[data-close-filters]").forEach((button) => button.addEventListener("click", () => filtersDialog.close()));
-
-    // клик по затемнению: цель — сам <dialog>, а не что-то внутри формы
-    filtersDialog.addEventListener("click", (event) => {
-        if (event.target === filtersDialog) filtersDialog.close();
-    });
-}

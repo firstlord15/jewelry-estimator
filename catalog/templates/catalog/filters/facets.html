@@ -1,14 +1,14 @@
 {# Новые числа у всех галочек панели для ответа на смену фильтра. «Тип изделия» есть только на /catalog/ #}
 {% if not category %}
     {% for item in category_counts %}
-        {% include "catalog/_facet_count.html" with name="category" value=item.slug count=item.count oob=True %}
+        {% include "catalog/filters/facet_count.html" with name="category" value=item.slug count=item.count oob=True %}
     {% endfor %}
 {% endif %}
 {% for probe in probes %}
-    {% include "catalog/_facet_count.html" with name="probe" value=probe.pk count=probe.count oob=True %}
+    {% include "catalog/filters/facet_count.html" with name="probe" value=probe.pk count=probe.count oob=True %}
 {% endfor %}
 {% for attribute in groups %}
     {% for item in attribute.values.all %}
-        {% include "catalog/_facet_count.html" with name="value" value=item.pk count=item.count oob=True %}
+        {% include "catalog/filters/facet_count.html" with name="value" value=item.pk count=item.count oob=True %}
     {% endfor %}
 {% endfor %}

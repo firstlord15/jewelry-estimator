@@ -17,7 +17,7 @@
                     {% include "icons/menu.svg" %}
                     <span class="action-label">{% trans "Каталог" %}</span>
                 </a>
-                <button class="action" type="button" data-open-search>
+                <button class="action" type="button" data-dialog-open="search-dialog">
                     {% include "icons/search.svg" %}
                     <span class="action-label">{% trans "Поиск" %}</span>
                 </button>
@@ -75,8 +75,8 @@
     <div class="search-dialog__inner">
         <form class="search-form" action="#" method="get" role="search">
             {% include "icons/search.svg" %}
-            <input type="search" name="q" placeholder="{% trans 'Название или артикул' %}" autocomplete="off" aria-label="{% trans 'Поиск по каталогу' %}" />
-            <button type="button" class="search-close" data-close-search aria-label="{% trans 'Закрыть' %}">
+            <input type="search" name="q" placeholder="{% trans 'Название или артикул' %}" autocomplete="off" aria-label="{% trans 'Поиск по каталогу' %}" autofocus />
+            <button type="button" class="search-close" data-dialog-close aria-label="{% trans 'Закрыть' %}">
                 {% include "icons/close.svg" %}
             </button>
         </form>

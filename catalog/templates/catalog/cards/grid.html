@@ -1,7 +1,7 @@
 {% load i18n %}
 {# Карточки одной страницы и кнопка следующей. Этот же кусок сервер отдаёт на запросы HTMX #}
 {% for product in page %}
-    {% include "catalog/_card.html" %}
+    {% include "catalog/cards/card.html" %}
 {% empty %}
     <p class="muted product-grid__empty">{% trans "Ничего не найдено." %}</p>
 {% endfor %}

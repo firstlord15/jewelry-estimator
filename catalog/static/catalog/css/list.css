@@ -1,0 +1,184 @@
+/* ---------- Страница каталога: постер, заголовок, сортировка, ряд чипов, раскладка ----------
+   Панель фильтров — в filters.css, карточки — в cards.css */
+
+/* Постер категории: показывается целиком, на телефоне просто уменьшается.
+   Пропорция как у banner_wide (1600×500): место резервируется заранее, страница не прыгает */
+.category-banner {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 5;
+  margin-top: 24px;
+  object-fit: cover;
+  border-radius: 22px;
+}
+
+/* Компьютер: заголовок слева, сортировка справа, ниже ряд чипов на всю ширину */
+.catalog-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 20px 16px;
+  margin-top: 24px;
+}
+
+.catalog-title {
+  margin: 0;
+}
+
+/* Число товаров рядом с заголовком: мелко и серым, как подпись */
+.catalog-count {
+  margin-left: 8px;
+  font: 400 16px var(--font);
+  white-space: nowrap;
+}
+
+/* Панель фильтров слева, товары справа */
+.catalog {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  align-items: start;
+  gap: 20px;
+}
+
+/* ---------- Сортировка ---------- */
+
+.sort .dropdown-btn {
+  transition:
+    color 0.2s,
+    background-color 0.2s,
+    border-color 0.2s;
+}
+
+/* Сортировка не по умолчанию: кнопка залита, как выбранный чип */
+.sort .dropdown-btn.is-changed {
+  color: var(--on-accent);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+/* «Сначала популярные» не переносится на две строки: меню становится шире */
+.sort-links a {
+  white-space: nowrap;
+}
+
+/* ---------- Ряд над товарами ---------- */
+
+/* Сброс, выбранные фильтры, категории, быстрые фильтры. При нехватке места листается вбок */
+.catalog-chips {
+  grid-column: 1 / -1;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.catalog-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.catalog-chips .chip {
+  flex-shrink: 0;
+}
+
+.catalog-chips,
+.category-nav {
+  display: flex;
+  gap: 8px;
+}
+
+/* Обёртки #selected и #quick (их обновляет HTMX) не участвуют в раскладке:
+   чипы внутри встают в ряд как обычные, а пустая обёртка не даёт лишнего отступа */
+.chips-slot {
+  display: contents;
+}
+
+/* «Сбросить» и выбранный фильтр: текст и крестик в одну строку */
+.chip--reset,
+.chip--active {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chip--reset .icon,
+.chip--active .icon {
+  width: 14px;
+  height: 14px;
+}
+
+/* выбранный фильтр залит, как отмеченный чип */
+.chip--active {
+  color: var(--on-accent);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+/* число выбранных фильтров на «Сбросить» */
+.chip__count {
+  color: var(--gold-bright);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (hover: hover) {
+  .sort .dropdown-btn.is-changed:hover {
+    background: var(--silver-bright);
+    border-color: var(--silver-bright);
+  }
+}
+
+/* Планшет и телефон: одна колонка, панель фильтров открывается кнопкой (filters.css) */
+@media (max-width: 960px) {
+  .catalog {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Телефон: заголовок сверху, ниже один ряд — значок сортировки и чипы */
+@media (max-width: 480px) {
+  .category-banner {
+    margin-top: 18px;
+    border-radius: 18px;
+  }
+
+  .catalog-head {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 16px 8px;
+    margin-top: 18px;
+  }
+
+  .catalog-title {
+    grid-column: 1 / -1;
+    font-size: 28px;
+  }
+
+  .catalog-count {
+    font-size: 14px;
+  }
+
+  .catalog-chips {
+    grid-column: 2;
+  }
+
+  /* Сортировка: круглая кнопка только со значком, название остаётся в aria-label */
+  .sort .dropdown-btn {
+    justify-content: center;
+    width: 40px;
+    padding: 0;
+  }
+
+  .sort__name {
+    display: none;
+  }
+
+  /* кнопка у левого края: меню открывается вправо от неё, а не за край экрана */
+  .sort .dropdown-menu {
+    right: auto;
+    left: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sort .dropdown-btn {
+    transition: none;
+  }
+}

@@ -249,11 +249,25 @@ h2 {
   color: var(--muted);
 }
 
-/* Выбранный чип или сегмент красится в цвет своего металла */
-:is(.segment, .chip)[aria-pressed="true"] {
+/* Выбранный чип или сегмент красится в цвет своего металла. Так же выглядят ссылка текущей категории
+   и чип со скрытой отмеченной галочкой (размер в фильтре и на странице товара) */
+:is(.segment, .chip)[aria-pressed="true"],
+.chip[aria-current="page"],
+.chip:has(input:checked) {
   color: var(--on-accent);
   background: var(--accent);
   border-color: var(--accent);
+}
+
+/* поле внутри чипа скрыто, поэтому рамку фокуса с клавиатуры рисуем на самом чипе */
+.chip:has(input:focus-visible) {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+
+.chip:disabled {
+  opacity: 0.45;
+  cursor: default;
 }
 
 /* ---------- Полоска прогресса ---------- */
