@@ -59,14 +59,19 @@
                 <span>{% trans "Есть в наличии" %}</span>
                 <input type="checkbox" name="in_stock" value="1"{% if request.GET.in_stock %} checked{% endif %} />
             </label>
-            {# Цена: пока просто два поля #}
-            <details class="filter-group" open>
-                <summary>{% trans "Цена, сом" %}</summary>
+            {# Цена: поля «от» и «до», под ними ползунок. Ползунки без name: в адрес уходят только поля. Без границ или при одной цене ползунка нет #}
+            <div class="price-range"{% if bounds and bounds.low != bounds.high %} data-price-range data-min="{{ bounds.low }}" data-max="{{ bounds.high }}"{% endif %}>
                 <div class="filters__price">
                     <input name="price_min" inputmode="decimal" value="{{ request.GET.price_min }}" placeholder="{{ bounds.low|default:_("от") }}" aria-label="{% trans 'Цена от' %}" />
                     <input name="price_max" inputmode="decimal" value="{{ request.GET.price_max }}" placeholder="{{ bounds.high|default:_("до") }}" aria-label="{% trans 'Цена до' %}" />
                 </div>
-            </details>
+                {% if bounds and bounds.low != bounds.high %}
+                    <div class="price-range__slider">
+                        <input type="range" data-range="min" min="{{ bounds.low }}" max="{{ bounds.high }}" step="100" aria-label="{% trans 'Цена от' %}" />
+                        <input type="range" data-range="max" min="{{ bounds.low }}" max="{{ bounds.high }}" step="100" aria-label="{% trans 'Цена до' %}" />
+                    </div>
+                {% endif %}
+            </div>
             {# Тип изделия: только на /catalog/, на странице категории он уже выбран #}
             {% if not category %}
                 <details class="filter-group" open>

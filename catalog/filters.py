@@ -1,7 +1,8 @@
 from decimal import Decimal, InvalidOperation
 
-from django.utils.translation import gettext as _, gettext_lazy
 from django.db.models import Count, F, Max, Min, Prefetch, Q
+from django.template.defaultfilters import floatformat
+from django.utils.translation import gettext as _, gettext_lazy
 
 from rates.models import Probe
 
@@ -180,10 +181,20 @@ def active_filters(params, categories, probes, groups):
 
     for size in params.getlist("size"):
         add(_("Размер %(size)s") % {"size": size}, "size", size)
-    if params.get("price_min"):
-        add(_("от %(price)s") % {"price": params["price_min"]}, "price_min")
-    if params.get("price_max"):
-        add(_("до %(price)s") % {"price": params["price_max"]}, "price_max")
+
+    # Цена одним чипом: «от 10 000 до 175 000 сом». Крестик убирает обе границы.
+    # Через to_decimal, как в apply_filters: «абв» в адресе цену не фильтрует, и чипа для неё нет
+    price_min, price_max = to_decimal(params.get("price_min")), to_decimal(params.get("price_max"))
+    if price_min is not None or price_max is not None:
+        parts = []
+        if price_min is not None:
+            parts.append(_("от %(price)s") % {"price": floatformat(price_min, "-2g")})
+        if price_max is not None:
+            parts.append(_("до %(price)s") % {"price": floatformat(price_max, "-2g")})
+        query = params.copy()
+        query.pop("price_max", None)
+        chips.append({"label": " ".join(parts) + " " + _("сом"), "url": without(query, "price_min")})
+
     if params.get("in_stock"):
         add(_("В наличии"), "in_stock")
     return chips
